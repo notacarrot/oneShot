@@ -1,3 +1,4 @@
+import os
 import bpy
 from bpy.types import PropertyGroup, Panel
 from bpy.props import StringProperty, BoolProperty, EnumProperty
@@ -7,6 +8,7 @@ class PhotogrammetrySettings(PropertyGroup):
         name="Video File",
         subtype='FILE_PATH',
         description="Path to the input video file"
+<<<<<<< Updated upstream
     )
     image_output_folder: StringProperty(
         name="Output Folder for Extracted Images",
@@ -18,10 +20,25 @@ class PhotogrammetrySettings(PropertyGroup):
         subtype='DIR_PATH',
         description="Directory containing images for 3D reconstruction"
     )
+=======
+    ) # type: ignore
+    image_output_folder: StringProperty(
+        name="Output Folder for Extracted Images",
+        subtype='DIR_PATH',
+        description="Directory where extracted frames will be saved",
+        default=os.path.join(bpy.app.tempdir, "oneshot_frames")
+    ) # type: ignore
+    image_input_folder: StringProperty(
+        name="Input Folder for Reconstruction",
+        subtype='DIR_PATH',
+        description="Directory containing images for 3D reconstruction",
+        default=os.path.join(bpy.app.tempdir, "oneshot_frames")
+    ) # type: ignore
+>>>>>>> Stashed changes
     show_advanced: BoolProperty(
         name="Show Advanced Settings",
         default=False
-    )
+    ) # type: ignore
     image_format: EnumProperty(
         name="Image Format",
         items=[
@@ -29,7 +46,7 @@ class PhotogrammetrySettings(PropertyGroup):
             ('JPG', "JPG", "Joint Photographic Experts Group"),
         ],
         default='PNG'
-    )
+    ) # type: ignore
     colmap_quality: EnumProperty(
         name="COLMAP Quality",
         items=[
@@ -39,7 +56,7 @@ class PhotogrammetrySettings(PropertyGroup):
             ('EXTREME', "Extreme", "Extreme quality COLMAP reconstruction"),
         ],
         default='MEDIUM'
-    )
+    ) # type: ignore
     delete_workspace: BoolProperty(
         name="Delete Workspace After Completion",
         description="Delete temporary files and workspace after photogrammetry is complete",
