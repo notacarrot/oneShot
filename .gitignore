@@ -1,0 +1,6 @@
+# .gitignore example
+__pycache__/
+*.pyc
+deps/
+
+#never leaving this behind next time
