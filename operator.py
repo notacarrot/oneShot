@@ -1,108 +1,73 @@
 import bpy
-import time
 import threading
+import time
 
-def run_photogrammetry_process(context, settings):
-    
+def run_photogrammetry_process(context):
     wm = context.window_manager
-    
-    try:
-        wm.photogrammetry_progress = 'Step 1/4: Extracting frames...'
-        print("Extracting frames...")
-        time.sleep(2) # Placeholder for actual work
+    wm.oneshot_progress = "Step 1/3: Preparing..."
+    time.sleep(2)
+    wm.oneshot_progress = "Step 2/3: Processing..."
+    time.sleep(2)
+    wm.oneshot_progress = "Step 3/3: Finalizing..."
+    time.sleep(2)
+    wm.oneshot_progress = "Finished!"
 
-        wm.photogrammetry_progress = 'Step 2/4: Running COLMAP...'
-        print("Running COLMAP...")
-        time.sleep(2) # Placeholder for actual work
-
-        wm.photogrammetry_progress = 'Step 3/4: Importing data...'
-        print("Importing data...")
-        time.sleep(2) # Placeholder for actual work
-        
-        wm.photogrammetry_progress = 'Step 4/4: Cleaning up...'
-        print("Cleaning up...")
-        time.sleep(2) # Placeholder for actual work
-
-        # The monitor will set the final "Finished!" message.
-        
-    except Exception as e:
-        wm.photogrammetry_progress = f"Error: {e}"
-
-class OT_start_photogrammetry(bpy.types.Operator):
-    bl_idname = "oneshot.generate_scene"
-    bl_label = "Generate 3D Scene"
-    
-    _thread = None
+class ONESHOT_OT_start_photogrammetry(bpy.types.Operator):
+    bl_idname = "oneshot.start_photogrammetry"
+    bl_label = "Start Photogrammetry"
+    bl_description = "Starts the photogrammetry process"
 
     def execute(self, context):
-        settings = context.scene.photogrammetry_settings
-        context.window_manager.photogrammetry_progress = 'Starting...'
-        
-        OT_start_photogrammetry._thread = threading.Thread(target=run_photogrammetry_process, args=(context, settings))
-        OT_start_photogrammetry._thread.start()
-        
-        bpy.ops.wm.photogrammetry_monitor('INVOKE_DEFAULT')
-        return {'FINISHED'}
+        wm = context.window_manager
+        wm.oneshot_progress = "Starting process..."
 
-class OT_photogrammetry_monitor(bpy.types.Operator):
-    bl_idname = "wm.photogrammetry_monitor"
-    bl_label = "Photogrammetry Monitor"
-    
+        # Create and start a new thread for the long-running process
+        thread = threading.Thread(target=run_photogrammetry_process, args=(context,))
+        thread.start()
+
+        # Store the thread in the window manager for the modal operator to monitor
+        wm.oneshot_photogrammetry_thread = thread
+
+        # Invoke the modal operator to monitor the thread
+        return context.window_manager.invoke_props_dialog(self, width=400)
+
+    def invoke(self, context, event):
+        # This invoke is for the dialog, the actual modal operator is invoked below
+        return context.window_manager.invoke_modal(ONESHOT_OT_monitor_photogrammetry.bl_idname)
+
+class ONESHOT_OT_monitor_photogrammetry(bpy.types.Operator):
+    bl_idname = "oneshot.monitor_photogrammetry"
+    bl_label = "Monitor Photogrammetry"
+
     _timer = None
+    _thread = None
+
+    def invoke(self, context, event):
+        wm = context.window_manager
+        self._thread = wm.oneshot_photogrammetry_thread
+
+        if not self._thread or not self._thread.is_alive():
+            self.report({'INFO'}, "Photogrammetry process not running.")
+            return {'FINISHED'}
+
+        self._timer = wm.event_timer_add(0.1, window=context.window)
+        wm.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
 
     def modal(self, context, event):
         if event.type == 'TIMER':
-            if OT_start_photogrammetry._thread and OT_start_photogrammetry._thread.is_alive():
-                # Redraw the view so the progress text updates
-                for area in context.screen.areas:
-                    if area.type == 'VIEW_3D':
-                        area.tag_redraw()
-                return {'PASS_THROUGH'}
-            else:
-                self.cancel(context)
-                context.window_manager.photogrammetry_progress = 'Finished!'
-                # Redraw the view a final time
-                for area in context.screen.areas:
-                    if area.type == 'VIEW_3D':
-                        area.tag_redraw()
+            if not self._thread.is_alive():
+                self.report({'INFO'}, "Photogrammetry process finished.")
+                context.window_manager.event_timer_remove(self._timer)
+                del context.window_manager.oneshot_photogrammetry_thread
                 return {'FINISHED'}
+            else:
+                # Force UI redraw to update progress text
+                context.area.tag_redraw()
         return {'PASS_THROUGH'}
-
-    def invoke(self, context, event):
-        self._timer = context.window_manager.event_timer_add(0.5, window=context.window)
-        context.window_manager.modal_handler_add(self)
-        return {'RUNNING_MODAL'}
 
     def cancel(self, context):
         context.window_manager.event_timer_remove(self._timer)
-
-class OneShot_OT_Import(bpy.types.Operator):
-    bl_idname = "oneshot.import_operator"
-    bl_label = "oneShot Import"
-
-    def execute(self, context):
-        print("Importing...")
-        return {'FINISHED'}
-
-class OneShot_OT_Export(bpy.types.Operator):
-    bl_idname = "oneshot.export_operator"
-    bl_label = "oneShot Export"
-
-    def execute(self, context):
-        print("Exporting...")
-        return {'FINISHED'}
-
-classes = (
-    OT_start_photogrammetry,
-    OT_photogrammetry_monitor,
-    OneShot_OT_Import,
-    OneShot_OT_Export,
-)
-
-def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
-
-def unregister():
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+        self.report({'INFO'}, "Photogrammetry monitoring cancelled.")
+        if hasattr(context.window_manager, 'oneshot_photogrammetry_thread'):
+            del context.window_manager.oneshot_photogrammetry_thread
