@@ -21,36 +21,15 @@ def _run_installation(context):
         current_os = platform.system()
         print(f"oneShot: Detected OS: {current_os}")
         if current_os == "Windows":
-            os_tag = "windows-cuda"
+            download_url = "https://github.com/colmap/colmap/releases/download/3.12.5/colmap-x64-windows-cuda.zip"
             executable_name = "colmap.exe"
-        elif current_os == "Linux":
-            os_tag = "linux-cuda"
-            executable_name = "colmap"
+            os_tag = "windows-cuda"
         else:
-            print(f"Error: Unsupported operating system: {current_os}")
+            print(f"Error: Unsupported operating system for COLMAP download: {current_os}")
             return
-
-        print("oneShot: Fetching latest COLMAP release from GitHub...")
-        github_api_url = "https://api.github.com/repos/colmap/colmap/releases/latest"
-        print(f"oneShot: Requesting URL: {github_api_url}")
-        response = requests.get(github_api_url)
-        response.raise_for_status() # Raise an exception for HTTP errors
-        release_data = response.json()
-        print("oneShot: Successfully fetched GitHub release data.")
-
-        download_url = None
-        for asset in release_data.get("assets", []):
-            if os_tag in asset.get("name", "").lower() and asset.get("name", "").endswith(".zip"):
-                download_url = asset["browser_download_url"]
-                break
-
-        if not download_url:
-            print(f"Error: Could not find COLMAP {os_tag} zip file in latest release.")
-            return
-        print(f"oneShot: Found download URL: {download_url}")
 
         # Download
-        print("oneShot: Downloading COLMAP...")
+        print(f"oneShot: Downloading COLMAP from {download_url}...")
         zip_file_path = deps_folder / f"colmap_{os_tag}.zip"
         print(f"oneShot: Downloading to: {zip_file_path}")
         with requests.get(download_url, stream=True) as r:

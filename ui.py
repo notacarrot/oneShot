@@ -8,19 +8,6 @@ class PhotogrammetrySettings(PropertyGroup):
         name="Video File",
         subtype='FILE_PATH',
         description="Path to the input video file"
-<<<<<<< Updated upstream
-    )
-    image_output_folder: StringProperty(
-        name="Output Folder for Extracted Images",
-        subtype='DIR_PATH',
-        description="Directory where extracted frames will be saved"
-    )
-    image_input_folder: StringProperty(
-        name="Input Folder for Reconstruction",
-        subtype='DIR_PATH',
-        description="Directory containing images for 3D reconstruction"
-    )
-=======
     ) # type: ignore
     image_output_folder: StringProperty(
         name="Output Folder for Extracted Images",
@@ -34,7 +21,6 @@ class PhotogrammetrySettings(PropertyGroup):
         description="Directory containing images for 3D reconstruction",
         default=os.path.join(bpy.app.tempdir, "oneshot_frames")
     ) # type: ignore
->>>>>>> Stashed changes
     show_advanced: BoolProperty(
         name="Show Advanced Settings",
         default=False
@@ -61,7 +47,7 @@ class PhotogrammetrySettings(PropertyGroup):
         name="Delete Workspace After Completion",
         description="Delete temporary files and workspace after photogrammetry is complete",
         default=True
-    )
+    ) # type: ignore
 
 class ONESHOT_PT_main_panel(Panel):
     bl_label = "OneShot Photogrammetry"
