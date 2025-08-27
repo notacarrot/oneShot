@@ -5,16 +5,16 @@ import numpy as np
 from mathutils import Matrix
 from mathutils import Vector
 
-from photogrammetry_importer.types.camera import Camera
-from photogrammetry_importer.blender_utility.object_utility import (
+from ..types.camera import Camera
+from ..blender_utility.object_utility import (
     add_collection,
     add_obj,
 )
 
-from photogrammetry_importer.opengl.utility import draw_coords
-from photogrammetry_importer.utility.timing_utility import StopWatch
-from photogrammetry_importer.utility.type_utility import is_int
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..opengl.utility import draw_coords
+from ..utility.timing_utility import StopWatch
+from ..utility.type_utility import is_int
+from ..blender_utility.logging_utility import log_report
 
 
 def compute_principal_point_shift(camera, relativ_to_largest_extend):

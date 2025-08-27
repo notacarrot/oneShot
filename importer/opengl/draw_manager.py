@@ -3,7 +3,7 @@ import atexit
 import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
 
 def _compute_transformed_coords(object_anchor_matrix_world, positions):
@@ -40,11 +40,11 @@ class DrawManager:
     @classmethod
     def get_singleton(cls):
         """Return a singleton of this class."""
-        if hasattr(bpy.types.Object, "current_draw_manager"):
-            draw_manger = bpy.types.Object.current_draw_manager
+        if hasattr(bpy.types.Object, "photogrammetry_pip_manager"):
+            draw_manger = bpy.types.Object.photogrammetry_pip_manager
         else:
             draw_manger = cls()
-            bpy.types.Object.current_draw_manager = draw_manger
+            bpy.types.Object.photogrammetry_pip_manager = draw_manger
         return draw_manger
 
     def register_points_draw_callback(

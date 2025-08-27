@@ -3,10 +3,10 @@ import bpy
 from bpy.props import StringProperty, CollectionProperty
 from bpy_extras.io_utils import ExportHelper
 
-from photogrammetry_importer.file_handlers.colmap_file_handler import (
+from ..file_handlers.colmap_file_handler import (
     ColmapFileHandler,
 )
-from photogrammetry_importer.operators.export_op import ExportOperator
+from .export_op import ExportOperator
 
 
 class ExportColmapOperator(ExportOperator, ExportHelper):

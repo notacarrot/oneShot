@@ -8,7 +8,7 @@ import importlib
 from collections import defaultdict
 import bpy
 from bpy.app.handlers import persistent
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 from bpy.props import StringProperty
 
 

@@ -6,19 +6,19 @@ from bpy.props import (
     IntProperty,
     PointerProperty,
 )
-from photogrammetry_importer.panels.screenshot_operators import (
+from ..panels.screenshot_operators import (
     ExportScreenshotImageOperator,
     ExportScreenshotAnimationOperator,
 )
-from photogrammetry_importer.panels.render_operators import (
+from ..panels.render_operators import (
     SaveOpenGLRenderImageOperator,
     ExportOpenGLRenderImageOperator,
     ExportOpenGLRenderAnimationOperator,
 )
-from photogrammetry_importer.types.point import Point
-from photogrammetry_importer.opengl.draw_manager import DrawManager
-from photogrammetry_importer.blender_utility.logging_utility import log_report
-from photogrammetry_importer.blender_utility.retrieval_utility import (
+from ..types.point import Point
+from ..opengl.draw_manager import DrawManager
+from ..blender_utility.logging_utility import log_report
+from ..blender_utility.retrieval_utility import (
     get_selected_empty,
     get_selected_camera,
 )

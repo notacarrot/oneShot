@@ -5,10 +5,10 @@ from bpy_extras.io_utils import ExportHelper
 
 from bpy.props import CollectionProperty
 
-from photogrammetry_importer.file_handlers.visualsfm_file_handler import (
+from ..file_handlers.visualsfm_file_handler import (
     VisualSfMFileHandler,
 )
-from photogrammetry_importer.operators.export_op import ExportOperator
+from .export_op import ExportOperator
 
 
 class ExportVisualSfMOperator(ExportOperator, ExportHelper):

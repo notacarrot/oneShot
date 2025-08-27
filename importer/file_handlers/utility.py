@@ -1,5 +1,5 @@
 import numpy as np
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
 
 def check_radial_distortion(radial_distortion, camera_name, op=None):

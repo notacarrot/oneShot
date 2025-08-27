@@ -5,20 +5,20 @@ from bpy.props import EnumProperty
 from bpy.props import IntProperty
 from bpy_extras.io_utils import ImportHelper
 
-from photogrammetry_importer.operators.import_op import ImportOperator
-from photogrammetry_importer.operators.general_options import GeneralOptions
+from ..operators.import_op import ImportOperator
+from ..operators.general_options import GeneralOptions
 
-from photogrammetry_importer.importers.camera_importer import CameraImporter
-from photogrammetry_importer.importers.point_importer import PointImporter
-from photogrammetry_importer.importers.mesh_importer import MeshImporter
+from ..importers.camera_importer import CameraImporter
+from ..importers.point_importer import PointImporter
+from ..importers.mesh_importer import MeshImporter
 
-from photogrammetry_importer.file_handlers.meshroom_file_handler import (
+from ..file_handlers.meshroom_file_handler import (
     MeshroomFileHandler,
 )
-from photogrammetry_importer.blender_utility.object_utility import (
+from ..blender_utility.object_utility import (
     add_collection,
 )
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
 
 class ImportMeshroomOperator(

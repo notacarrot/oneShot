@@ -5,7 +5,7 @@ from bpy.props import (
     IntProperty,
     PointerProperty,
 )
-from photogrammetry_importer.panels.view_synthesis_operators import (
+from .view_synthesis_operators import (
     RunViewSynthesisOperator,
 )
 

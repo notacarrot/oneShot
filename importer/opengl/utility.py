@@ -5,10 +5,10 @@ from mathutils import Matrix
 from gpu.types import GPUOffScreen
 from gpu_extras.batch import batch_for_shader
 
-from photogrammetry_importer.types.point import Point
-from photogrammetry_importer.opengl.draw_manager import DrawManager
-from photogrammetry_importer.blender_utility.object_utility import add_empty
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..types.point import Point
+from ..opengl.draw_manager import DrawManager
+from ..blender_utility.object_utility import add_empty
+from ..blender_utility.logging_utility import log_report
 
 
 def _draw_coords_with_color(
@@ -191,7 +191,7 @@ def _copy_buffer_to_pixel(buffer, image, width, height):
     # gpu.types.Buffer and bpy.types.Image.pixels
     # (this makes the extraction very slow)
 
-    # # from photogrammetry_importer.utility.timing_utility import StopWatch
+    # # from ..utility.timing_utility import StopWatch
     # Option 1 (faster)
     # sw = StopWatch()
     buffer.dimensions = width * height * 4

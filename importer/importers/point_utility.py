@@ -2,13 +2,13 @@ import bpy
 import numpy as np
 from mathutils import Vector
 
-from photogrammetry_importer.types.point import Point
-from photogrammetry_importer.blender_utility.object_utility import (
+from ..types.point import Point
+from ..blender_utility.object_utility import (
     add_collection,
     add_obj,
 )
-from photogrammetry_importer.utility.timing_utility import StopWatch
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..utility.timing_utility import StopWatch
+from ..blender_utility.logging_utility import log_report
 
 
 def _copy_values_to_image(value_tripplets, image_name):

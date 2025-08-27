@@ -1,18 +1,18 @@
 import os
 from bpy.props import StringProperty
 
-from photogrammetry_importer.operators.import_op import ImportOperator
-from photogrammetry_importer.operators.general_options import GeneralOptions
+from ..operators.import_op import ImportOperator
+from ..operators.general_options import GeneralOptions
 
-from photogrammetry_importer.importers.camera_importer import CameraImporter
+from ..importers.camera_importer import CameraImporter
 
-from photogrammetry_importer.file_handlers.instant_ngp_file_handler import (
+from ..file_handlers.instant_ngp_file_handler import (
     InstantNGPFileHandler,
 )
-from photogrammetry_importer.blender_utility.object_utility import (
+from ..blender_utility.object_utility import (
     add_collection,
 )
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
 
 class ImportInstantNGPOperator(

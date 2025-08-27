@@ -4,16 +4,16 @@ import configparser
 import math
 import struct
 
-from photogrammetry_importer.file_handlers.image_file_handler import (
+from ..file_handlers.image_file_handler import (
     ImageFileHandler,
 )
-from photogrammetry_importer.utility.os_utility import get_subdirs
-from photogrammetry_importer.file_handlers.utility import (
+from ..utility.os_utility import get_subdirs
+from ..file_handlers.utility import (
     check_radial_distortion,
 )
-from photogrammetry_importer.blender_utility.logging_utility import log_report
-from photogrammetry_importer.types.camera import Camera
-from photogrammetry_importer.types.point import Point
+from ..blender_utility.logging_utility import log_report
+from ..types.camera import Camera
+from ..types.point import Point
 
 
 class MVEFileHandler:
@@ -134,8 +134,6 @@ class MVEFileHandler:
         principal_point_list = MVEFileHandler._str_to_arr(
             principal_point_str, target_type=float
         )
-        cx_normalized = principal_point_list[0]
-        cy_normalized = principal_point_list[1]
         cx = cx_normalized * width
         cy = cy_normalized * height
 
@@ -252,7 +250,7 @@ class MVEFileHandler:
         :param format_char_sequence: List of {c, e, f, d, h, H, i, I, ...}.
         :param endian_character: Any of {@, =, <, >, !}
         :return: Tuple of read and unpacked values.
-        """
+        ""
         data = fid.read(num_bytes)
         return struct.unpack(endian_character + format_char_sequence, data)
 

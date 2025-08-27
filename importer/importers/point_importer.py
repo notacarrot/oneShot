@@ -7,12 +7,12 @@ from bpy.props import (
     FloatProperty,
     FloatVectorProperty,
 )
-from photogrammetry_importer.opengl.utility import draw_points
-from photogrammetry_importer.importers.point_utility import (
+from ..opengl.utility import draw_points
+from ..importers.point_utility import (
     add_points_as_mesh_vertices,
     add_points_as_object_with_particle_system,
 )
-from photogrammetry_importer.types.point import Point
+from ..types.point import Point
 
 
 class PointImporter:

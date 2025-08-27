@@ -6,21 +6,21 @@ import bpy
 from tempfile import NamedTemporaryFile
 
 
-from photogrammetry_importer.blender_utility.retrieval_utility import (
+from ..blender_utility.retrieval_utility import (
     get_selected_camera,
 )
-from photogrammetry_importer.blender_utility.logging_utility import log_report
-from photogrammetry_importer.importers.camera_utility import (
+from ..blender_utility.logging_utility import log_report
+from ..importers.camera_utility import (
     load_background_image,
     get_computer_vision_camera,
 )
-from photogrammetry_importer.file_handlers.instant_ngp_file_handler import (
+from ..file_handlers.instant_ngp_file_handler import (
     InstantNGPFileHandler,
 )
-from photogrammetry_importer.process_communication.subprocess_command import (
+from ..process_communication.subprocess_command import (
     create_subprocess_command,
 )
-from photogrammetry_importer.process_communication.file_communication import (
+from ..process_communication.file_communication import (
     read_np_array_from_file,
 )
 
@@ -133,7 +133,6 @@ class RunViewSynthesisOperator(bpy.types.Operator):  # ImportHelper
             width=img_np_array.shape[1],
             height=img_np_array.shape[0],
         )
-        img_np_array_flipped = np.flipud(img_np_array)
         blender_image.pixels = img_np_array_flipped.ravel()
         load_background_image(blender_image, camera_obj.name)
 

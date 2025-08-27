@@ -1,8 +1,8 @@
 import os
 import bpy
 from bpy.props import BoolProperty
-from photogrammetry_importer.blender_utility.logging_utility import log_report
-from photogrammetry_importer.importers.mesh_utility import (
+from ..blender_utility.logging_utility import log_report
+from .mesh_utility import (
     add_color_emission_to_material,
     add_mesh_vertex_color_material,
 )
@@ -46,7 +46,7 @@ class MeshImporter:
                     filepath=mesh_fp, forward_axis="NEGATIVE_Y", up_axis="NEGATIVE_Z"
                 )
             elif os.path.splitext(mesh_fp)[1].lower() == ".ply":
-                # https://docs.blender.org/api/current/bpy.ops.import_mesh.html
+                # https://docs.blender.org/api/current/bpy.ops.import_mesh.ply(filepath=mesh_fp)
                 bpy.ops.import_mesh.ply(filepath=mesh_fp)
             else:
                 assert False

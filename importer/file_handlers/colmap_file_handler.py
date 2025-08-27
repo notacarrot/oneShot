@@ -1,8 +1,8 @@
 import os
 import numpy as np
 
-from photogrammetry_importer.ext.read_dense import read_array
-from photogrammetry_importer.ext.read_write_model import (
+from ..ext.read_dense import read_array
+from ..ext.read_write_model import (
     read_model,
     write_model,
     Camera as ColmapCamera,
@@ -10,12 +10,12 @@ from photogrammetry_importer.ext.read_write_model import (
     Point3D as ColmapPoint3D,
 )
 
-from photogrammetry_importer.types.camera import Camera
-from photogrammetry_importer.types.point import Point
-from photogrammetry_importer.file_handlers.utility import (
+from ..types.camera import Camera
+from ..types.point import Point
+from ..file_handlers.utility import (
     check_radial_distortion,
 )
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
 # From photogrammetry_importer\ext\read_write_model.py
 # CAMERA_MODELS = {

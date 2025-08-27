@@ -3,19 +3,19 @@ import bpy
 import json
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
-from photogrammetry_importer.preferences.dependency import (
+from ..preferences.dependency import (
     InstallOptionalDependenciesOperator,
     UninstallOptionalDependenciesOperator,
     PipManager,
     OptionalDependencyManager,
 )
-from photogrammetry_importer.blender_utility.logging_utility import log_report
-from photogrammetry_importer.utility.ui_utility import add_multi_line_label
-from photogrammetry_importer.importers.camera_importer import CameraImporter
-from photogrammetry_importer.importers.point_importer import PointImporter
-from photogrammetry_importer.importers.mesh_importer import MeshImporter
+from ..blender_utility.logging_utility import log_report
+from ..utility.ui_utility import add_multi_line_label
+from ..importers.camera_importer import CameraImporter
+from ..importers.point_importer import PointImporter
+from ..importers.mesh_importer import MeshImporter
 
-from photogrammetry_importer.registration.registration import Registration
+from ..registration.registration import Registration
 
 
 def _get_addon_name():
@@ -357,7 +357,7 @@ class UpdateImporterExporterOperator(bpy.types.Operator):
 
         Uses the selected options of :class:`.AddonPreferences` to determine
         active and inactive importers and exporters.
-        """
+        ""
         log_report("INFO", "Update importers and exporters: ...", self)
         addon_name = _get_addon_name()
         import_export_prefs = bpy.context.preferences.addons[

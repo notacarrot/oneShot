@@ -9,16 +9,16 @@ from bpy.props import (
     FloatVectorProperty,
 )
 
-from photogrammetry_importer.importers.camera_utility import (
+from ..importers.camera_utility import (
     add_cameras,
     adjust_render_settings_if_possible,
 )
-from photogrammetry_importer.importers.camera_animation_utility import (
+from ..importers.camera_animation_utility import (
     add_camera_animation,
 )
-from photogrammetry_importer.types.camera import Camera
+from ..types.camera import Camera
 
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
 
 class CameraImporter:

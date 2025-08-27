@@ -4,12 +4,12 @@ import os
 import math
 import sys
 
-from photogrammetry_importer.types.camera import Camera
-from photogrammetry_importer.types.point import Point
-from photogrammetry_importer.file_handlers.utility import (
+from ..types.camera import Camera
+from ..types.point import Point
+from ..file_handlers.utility import (
     check_radial_distortion,
 )
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
 
 class OpenSfMJSONFileHandler:

@@ -1,12 +1,12 @@
 import os
 import bpy
 from bpy_extras.io_utils import ExportHelper
-from photogrammetry_importer.blender_utility.retrieval_utility import (
+from ..blender_utility.retrieval_utility import (
     get_selected_camera,
     get_scene_animation_indices,
     get_object_animation_indices,
 )
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
 
 def _update_ui(context):

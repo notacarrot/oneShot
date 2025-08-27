@@ -1,4 +1,4 @@
-from photogrammetry_importer.process_communication.serialization import (
+from .serialization import (
     serialize_string,
     serialize_json_dict,
     deserialize_json_dict,

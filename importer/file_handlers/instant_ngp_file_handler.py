@@ -3,12 +3,12 @@ import os
 import math
 import numpy as np
 
-from photogrammetry_importer.types.camera import Camera
-from photogrammetry_importer.file_handlers.utility import (
+from ..types.camera import Camera
+from ..file_handlers.utility import (
     check_radial_distortion,
 )
-from photogrammetry_importer.blender_utility.logging_utility import log_report
-from photogrammetry_importer.importers.camera_utility import (
+from ..blender_utility.logging_utility import log_report
+from ..importers.camera_utility import (
     invert_y_and_z_axis,
 )
 

@@ -2,9 +2,9 @@ import os
 import numpy as np
 import importlib
 
-from photogrammetry_importer.types.point import Point
-from photogrammetry_importer.blender_utility.logging_utility import log_report
-from photogrammetry_importer.utility.type_utility import is_float, is_int
+from ..types.point import Point
+from ..blender_utility.logging_utility import log_report
+from ..utility.type_utility import is_float, is_int
 
 
 class _DataSemantics:

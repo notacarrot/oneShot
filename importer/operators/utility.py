@@ -1,4 +1,4 @@
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
 
 def set_image_size_for_cameras(
@@ -6,7 +6,7 @@ def set_image_size_for_cameras(
 ):
     """Set image sizes for cameras and return a boolean."""
 
-    from photogrammetry_importer.file_handlers.image_file_handler import (
+    from ..file_handlers.image_file_handler import (
         ImageFileHandler,
     )
 

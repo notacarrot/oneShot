@@ -1,15 +1,15 @@
 import os
 import bpy
 from bpy_extras.io_utils import ExportHelper
-from photogrammetry_importer.blender_utility.retrieval_utility import (
+from ..blender_utility.retrieval_utility import (
     get_selected_camera,
     get_scene_animation_indices,
     get_object_animation_indices,
 )
-from photogrammetry_importer.opengl.draw_manager import DrawManager
-from photogrammetry_importer.opengl.utility import render_opengl_image
-from photogrammetry_importer.blender_utility.logging_utility import log_report
-from photogrammetry_importer.blender_utility.image_utility import (
+from ..opengl.draw_manager import DrawManager
+from ..opengl.utility import render_opengl_image
+from ..blender_utility.logging_utility import log_report
+from ..blender_utility.image_utility import (
     save_image_to_disk,
 )
 

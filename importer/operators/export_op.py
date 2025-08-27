@@ -1,9 +1,9 @@
 import bpy
-from photogrammetry_importer.types.point import Point
-from photogrammetry_importer.importers.camera_utility import (
+from ..types.point import Point
+from ..importers.camera_utility import (
     get_computer_vision_camera,
 )
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
 
 class ExportOperator(bpy.types.Operator):

@@ -1,39 +1,39 @@
 import importlib
 import bpy
 
-from photogrammetry_importer.operators.colmap_import_op import (
+from ..operators.colmap_import_op import (
     ImportColmapOperator,
 )
-from photogrammetry_importer.operators.meshroom_import_op import (
+from ..operators.meshroom_import_op import (
     ImportMeshroomOperator,
 )
-from photogrammetry_importer.operators.mve_import_op import ImportMVEOperator
-from photogrammetry_importer.operators.visualsfm_import_op import (
+from ..operators.mve_import_op import ImportMVEOperator
+from ..operators.visualsfm_import_op import (
     ImportVisualSfMOperator,
 )
-from photogrammetry_importer.operators.openmvg_import_op import (
+from ..operators.openmvg_import_op import (
     ImportOpenMVGOperator,
 )
-from photogrammetry_importer.operators.opensfm_import_op import (
+from ..operators.opensfm_import_op import (
     ImportOpenSfMOperator,
 )
-from photogrammetry_importer.operators.open3d_import_op import (
+from ..operators.open3d_import_op import (
     ImportOpen3DOperator,
 )
-from photogrammetry_importer.operators.point_data_import_op import (
+from ..operators.point_data_import_op import (
     ImportPointDataOperator,
 )
-from photogrammetry_importer.operators.instant_ngp_import_op import (
+from ..operators.instant_ngp_import_op import (
     ImportInstantNGPOperator,
 )
 
-from photogrammetry_importer.operators.visualsfm_export_op import (
+from ..operators.visualsfm_export_op import (
     ExportVisualSfMOperator,
 )
-from photogrammetry_importer.operators.colmap_export_op import (
+from ..operators.colmap_export_op import (
     ExportColmapOperator,
 )
-from photogrammetry_importer.operators.instant_ngp_export_op import (
+from ..operators.instant_ngp_export_op import (
     ExportInstantNGPOperator,
 )
 

@@ -3,21 +3,21 @@ import bpy
 from bpy.props import StringProperty
 from bpy_extras.io_utils import ImportHelper
 
-from photogrammetry_importer.operators.import_op import ImportOperator
-from photogrammetry_importer.operators.general_options import GeneralOptions
+from ..operators.import_op import ImportOperator
+from ..operators.general_options import GeneralOptions
 
-from photogrammetry_importer.importers.point_importer import PointImporter
+from ..importers.point_importer import PointImporter
 
-from photogrammetry_importer.file_handlers.point_data_file_handler import (
+from ..file_handlers.point_data_file_handler import (
     PointDataFileHandler,
 )
-from photogrammetry_importer.file_handlers.transformation_file_handler import (
+from ..file_handlers.transformation_file_handler import (
     TransformationFileHandler,
 )
-from photogrammetry_importer.blender_utility.object_utility import (
+from ..blender_utility.object_utility import (
     add_collection,
 )
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
 
 class ImportPointDataOperator(

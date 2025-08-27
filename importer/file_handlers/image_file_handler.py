@@ -1,5 +1,5 @@
 import os
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
 
 class ImageFileHandler:

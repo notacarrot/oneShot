@@ -2,13 +2,13 @@ import json
 import numpy as np
 import os
 
-from photogrammetry_importer.types.camera import Camera
-from photogrammetry_importer.types.point import Point
-from photogrammetry_importer.utility.os_utility import (
+from ..types.camera import Camera
+from ..types.point import Point
+from ..utility.os_utility import (
     get_image_file_paths_in_dir,
 )
 
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
 
 class Open3DFileHandler:

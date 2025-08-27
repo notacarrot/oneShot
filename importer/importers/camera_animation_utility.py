@@ -4,21 +4,21 @@ from collections import namedtuple
 import bpy
 from mathutils import Quaternion
 from mathutils import Matrix
-from photogrammetry_importer.blender_utility.logging_utility import log_report
+from ..blender_utility.logging_utility import log_report
 
-from photogrammetry_importer.importers.camera_utility import (
+from ..importers.camera_utility import (
     add_camera_object,
     compute_principal_point_shift,
     compute_camera_matrix_world,
 )
 
-from photogrammetry_importer.blender_utility.object_utility import add_obj
+from ..blender_utility.object_utility import add_obj
 
-from photogrammetry_importer.utility.os_utility import (
+from ..utility.os_utility import (
     get_image_file_paths_in_dir,
 )
 
-from photogrammetry_importer.types.camera import Camera
+from ..types.camera import Camera
 
 
 _CameraIntrinsics = namedtuple(
@@ -198,7 +198,10 @@ def _add_transformation_animation(
 
 
 def _add_camera_intrinsics_animation(
-    animated_obj_name, intrinsics_sorted, number_interpolation_frames, op=None
+    animated_obj_name,
+    intrinsics_sorted,
+    number_interpolation_frames,
+    op=None,
 ):
 
     log_report("INFO", "Adding camera intrinsic parameter animation: ...", op)
