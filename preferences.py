@@ -201,20 +201,12 @@ class OneShotPreferences(bpy.types.AddonPreferences):
         name="COLMAP Executable Path",
         subtype='FILE_PATH',
         description="Path to the COLMAP executable (colmap.bat or colmap.exe)"
-<<<<<<< Updated upstream
-    )
-=======
     ) # type: ignore
->>>>>>> Stashed changes
     ffmpeg_executable_path: bpy.props.StringProperty(
         name="FFmpeg Executable Path",
         subtype='FILE_PATH',
         description="Path to the FFmpeg executable (ffmpeg.exe)"
-<<<<<<< Updated upstream
-    )
-=======
     ) # type: ignore
->>>>>>> Stashed changes
 
     def draw(self, context):
         layout = self.layout

@@ -2,5 +2,5 @@
 __pycache__/
 *.pyc
 deps/
-
+importer/__pycache__/
 #never leaving this behind next time
