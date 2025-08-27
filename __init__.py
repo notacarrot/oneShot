@@ -32,13 +32,13 @@ def register():
 
     bpy.types.Scene.oneshot_settings = bpy.props.PointerProperty(type=ui.PhotogrammetrySettings)
     bpy.types.WindowManager.oneshot_progress = bpy.props.StringProperty(name="OneShot Progress", default="")
-    bpy.types.WindowManager.oneshot_photogrammetry_thread = None
+    
 
 def unregister():
     print("oneShot: Unregistering addon...")
     del bpy.types.Scene.oneshot_settings
     del bpy.types.WindowManager.oneshot_progress
-    del bpy.types.WindowManager.oneshot_photogrammetry_thread
+    
 
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

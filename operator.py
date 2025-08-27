@@ -7,6 +7,8 @@ import shutil
 from pathlib import Path
 from .importer import import_colmap_scene
 
+_background_thread = None
+
 def _extract_frames(video_path: str, output_dir: str, image_format: str) -> bool:
     temp_scene = None
     original_scene = bpy.context.window.scene # Store original scene
@@ -207,7 +209,8 @@ class ONESHOT_OT_start_photogrammetry(bpy.types.Operator):
         thread.start()
 
         # Store the thread in the window manager for the modal operator to monitor
-        wm.oneshot_photogrammetry_thread = thread
+        global _background_thread
+        _background_thread = thread
 
         # Invoke the modal operator to monitor the thread
         return bpy.ops.oneshot.monitor_photogrammetry('INVOKE_DEFAULT')
@@ -221,7 +224,8 @@ class ONESHOT_OT_monitor_photogrammetry(bpy.types.Operator):
 
     def invoke(self, context, event):
         wm = context.window_manager
-        self._thread = wm.oneshot_photogrammetry_thread
+        global _background_thread
+        self._thread = _background_thread
 
         if not self._thread or not self._thread.is_alive():
             self.report({'INFO'}, "Photogrammetry process not running.")
@@ -238,7 +242,7 @@ class ONESHOT_OT_monitor_photogrammetry(bpy.types.Operator):
             if not self._thread.is_alive():
                 self.report({'INFO'}, "Photogrammetry process finished.")
                 context.window_manager.event_timer_remove(self._timer)
-                context.window_manager.oneshot_photogrammetry_thread = None
+                _background_thread = None
                 print("oneShot: ONESHOT_OT_monitor_photogrammetry: Process finished, monitoring stopped.")
                 return {'FINISHED'}
             else:
@@ -251,5 +255,5 @@ class ONESHOT_OT_monitor_photogrammetry(bpy.types.Operator):
         self.report({'INFO'}, "Photogrammetry monitoring cancelled.")
         print("oneShot: ONESHOT_OT_monitor_photogrammetry: Monitoring cancelled.")
         if hasattr(context.window_manager, 'oneshot_photogrammetry_thread'):
-            context.window_manager.oneshot_photogrammetry_thread = None
-            print("oneShot: ONESHOT_OT_monitor_photogrammetry: Thread reference cleared.")
+            _background_thread = None
+            print("oneShot: ONESHOT_OT_monitor_photogrammetry: Thread reference cleared.") # type: ignore
