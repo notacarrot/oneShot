@@ -81,14 +81,14 @@ def _extract_frames(video_path: str, output_dir: str, image_format: str) -> bool
 
 def _run_colmap(colmap_executable_path: str, image_directory: str, workspace_path: Path) -> Path | None:
     try:
-        print(f"oneShot: _run_colmap: Starting COLMAP execution. Executable: {colmap_executable_path}, Images: {image_directory}, Workspace: {workspace_path}")
+        print(f"oneShot: _run_colmap: Starting COLMAP execution. Executable: {colmap_executable_path}, Images: {image_directory}, Workspace: {workspace_path})")
         database_path = workspace_path / "database.db"
         output_path = workspace_path / "output"
         output_path.mkdir(parents=True, exist_ok=True)
 
         commands = [
-            [colmap_executable_path, "feature_extractor", "--database_path", str(database_path), "--image_path", str(image_directory)],
-            [colmap_executable_path, "exhaustive_matcher", "--database_path", str(database_path)],
+            [colmap_executable_path, "feature_extractor", "--database_path", str(database_path), "--image_path", str(image_directory), "--ImageReader.single_camera", "1"],
+            [colmap_executable_path, "sequential_matcher", "--database_path", str(database_path)], # Changed from exhaustive_matcher
             [colmap_executable_path, "mapper", "--database_path", str(database_path), "--image_path", str(image_directory), "--output_path", str(output_path)],
         ]
 
@@ -118,105 +118,168 @@ def _run_colmap(colmap_executable_path: str, image_directory: str, workspace_pat
         print(f"oneShot: _run_colmap Error: An error occurred during COLMAP execution: {e}")
         return None
 
-def run_photogrammetry_process(context):
-    wm = context.window_manager
-    settings = context.scene.oneshot_settings
-    prefs = context.preferences.addons[__package__].preferences
-    temp_workspace_root = None # Initialize to None for finally block
+def run_photogrammetry_process(colmap_exe_path: str, image_dir: str, workspace_dir: Path, delete_workspace: bool):
+    # wm = context.window_manager  <-- Removed
+    # settings = context.scene.oneshot_settings <-- Removed
+    # prefs = context.preferences.addons[__package__].preferences <-- Removed
+    
+    # Progress updates will be handled by the main thread via the modal operator
+    # This function should not directly access Blender's context or UI properties.
 
     try:
-        print("oneShot: run_photogrammetry_process: Starting main photogrammetry process.")
-        video_path = settings.video_path
-        colmap_executable_path = prefs.colmap_executable_path
-        image_format = settings.image_format
-        delete_workspace = settings.delete_workspace
-
-        print(f"oneShot: run_photogrammetry_process: Settings - Video Path: {video_path}, COLMAP Executable: {colmap_executable_path}, Image Format: {image_format}, Delete Workspace: {delete_workspace}")
-
-        if not video_path or not os.path.exists(video_path):
-            wm.oneshot_progress = "Error: Video path not set or invalid."
-            print(f"oneShot: run_photogrammetry_process Error: Video path invalid: {video_path}")
-            return
+        print("oneShot: run_photogrammetry_process: Starting background photogrammetry process.")
         
-        if not colmap_executable_path or not os.path.exists(colmap_executable_path):
-            wm.oneshot_progress = "Error: COLMAP executable path not set or invalid."
-            print(f"oneShot: run_photogrammetry_process Error: COLMAP executable path invalid: {colmap_executable_path}")
-            return
-
-        job_id = int(time.time())
-        temp_workspace_root = Path(bpy.app.tempdir) / f"oneshot_job_{job_id}"
-        temp_workspace_root.mkdir(parents=True, exist_ok=True)
-        print(f"oneShot: run_photogrammetry_process: Created temporary workspace: {temp_workspace_root}")
-
-        image_output_dir = temp_workspace_root / "images"
-        image_output_dir.mkdir(parents=True, exist_ok=True)
-        print(f"oneShot: run_photogrammetry_process: Created image output directory: {image_output_dir}")
-
-        wm.oneshot_progress = "Step 1/3: Extracting Frames..."
-        print("oneShot: run_photogrammetry_process: Calling _extract_frames...")
-        if not _extract_frames(video_path, str(image_output_dir), image_format):
-            wm.oneshot_progress = "Error: Frame extraction failed."
-            print("oneShot: run_photogrammetry_process Error: Frame extraction failed.")
-            return
-        print("oneShot: run_photogrammetry_process: Frame extraction completed successfully.")
-
-        wm.oneshot_progress = "Step 2/3: Running COLMAP Reconstruction..."
+        # Step 2/3: Running COLMAP Reconstruction...
+        # Progress update will be done by the main thread
         print("oneShot: run_photogrammetry_process: Calling _run_colmap...")
-        sparse_reconstruction_path = _run_colmap(colmap_executable_path, str(image_output_dir), temp_workspace_root)
+        sparse_reconstruction_path = _run_colmap(colmap_exe_path, image_dir, workspace_dir)
         if sparse_reconstruction_path is None:
-            wm.oneshot_progress = "Error: COLMAP reconstruction failed."
             print("oneShot: run_photogrammetry_process Error: COLMAP reconstruction failed.")
-            return
+            return # Indicate failure to the main thread
+
         print("oneShot: run_photogrammetry_process: COLMAP reconstruction completed successfully.")
 
-        wm.oneshot_progress = "Step 3/3: Importing Scene into Blender..."
+        # Step 3/3: Importing Scene into Blender...
+        # Progress update will be done by the main thread
         print("oneShot: run_photogrammetry_process: Calling import_colmap_scene...")
         if not import_colmap_scene(str(sparse_reconstruction_path)):
-            wm.oneshot_progress = "Error: Scene import failed."
             print("oneShot: run_photogrammetry_process Error: Scene import failed.")
-            return
+            return # Indicate failure to the main thread
         print("oneShot: run_photogrammetry_process: Scene imported successfully.")
 
-        wm.oneshot_progress = "Finished!"
         print("oneShot: run_photogrammetry_process: Photogrammetry process finished.")
 
     except Exception as e:
-        wm.oneshot_progress = f"An unexpected error occurred: {e}"
         print(f"oneShot: run_photogrammetry_process Error: An unexpected error occurred: {e}")
     finally:
         print("oneShot: run_photogrammetry_process: Entering finally block for cleanup.")
-        if temp_workspace_root and temp_workspace_root.exists():
+        if workspace_dir and workspace_dir.exists():
             if delete_workspace:
-                shutil.rmtree(temp_workspace_root)
-                print(f"oneShot: run_photogrammetry_process: Cleaned up temporary workspace: {temp_workspace_root}")
+                shutil.rmtree(workspace_dir)
+                print(f"oneShot: run_photogrammetry_process: Cleaned up temporary workspace: {workspace_dir}")
             else:
-                print(f"oneShot: run_photogrammetry_process: Temporary workspace retained: {temp_workspace_root}")
+                print(f"oneShot: run_photogrammetry_process: Temporary workspace retained: {workspace_dir}")
         else:
             print("oneShot: run_photogrammetry_process: No temporary workspace to clean up or retain.")
 
-class ONESHOT_OT_start_photogrammetry(bpy.types.Operator):
-    bl_idname = "oneshot.start_photogrammetry"
+class ONESHOT_OT_extract_frames(bpy.types.Operator):
+    bl_idname = "oneshot.extract_frames"
+    bl_label = "Extract Frames"
+    bl_description = "Extracts frames from the video to the specified folder using FFmpeg"
+
+    def execute(self, context):
+        wm = context.window_manager
+        settings = context.scene.oneshot_settings
+        prefs = context.preferences.addons[__package__].preferences
+
+        video_input_path = settings.video_input_path
+        image_output_folder = settings.image_output_folder
+        ffmpeg_executable_path = prefs.ffmpeg_executable_path
+        image_format = settings.image_format.lower() # png or jpg
+
+        # --- Validation ---
+        if not video_input_path or not os.path.exists(video_input_path):
+            self.report({'ERROR'}, "Video input path not set or invalid.")
+            return {'CANCELLED'}
+        
+        if not image_output_folder:
+            self.report({'ERROR'}, "Image output folder not set.")
+            return {'CANCELLED'}
+        
+        if not os.path.exists(image_output_folder):
+            try:
+                os.makedirs(image_output_folder)
+            except OSError as e:
+                self.report({'ERROR'}, f"Could not create output directory: {e}")
+                return {'CANCELLED'}
+
+        if not ffmpeg_executable_path or not os.path.exists(ffmpeg_executable_path):
+            self.report({'ERROR'}, "FFmpeg executable path not set or invalid. Please configure in addon preferences.")
+            return {'CANCELLED'}
+
+        # --- FFmpeg Command ---
+        # Example: ffmpeg -i input.mp4 output_folder/%04d.png
+        output_pattern = os.path.join(image_output_folder, f"%04d.{image_format}")
+        command = [
+            ffmpeg_executable_path,
+            "-i", video_input_path,
+            output_pattern
+        ]
+
+        wm.oneshot_progress = "Extracting frames with FFmpeg..."
+        print(f"oneShot: Running FFmpeg command: {' '.join(command)}")
+
+        try:
+            process = subprocess.run(command, capture_output=True, text=True, check=True)
+            print(f"oneShot: FFmpeg STDOUT:\n{process.stdout}")
+            print(f"oneShot: FFmpeg STDERR:\n{process.stderr}")
+            self.report({'INFO'}, "Frame extraction successful!")
+            wm.oneshot_progress = "Frame extraction complete."
+            return {'FINISHED'}
+        except subprocess.CalledProcessError as e:
+            self.report({'ERROR'}, f"FFmpeg command failed: {e.stderr}")
+            wm.oneshot_progress = "Error: Frame extraction failed."
+            print(f"oneShot: FFmpeg Error: {e.stderr}")
+            return {'CANCELLED'}
+        except Exception as e:
+            self.report({'ERROR'}, f"An unexpected error occurred during FFmpeg execution: {e}")
+            wm.oneshot_progress = "Error: Frame extraction failed."
+            print(f"oneShot: Unexpected FFmpeg Error: {e}")
+            return {'CANCELLED'}
+
+class ONESHOT_OT_reconstruct_scene(bpy.types.Operator):
+    bl_idname = "oneshot.reconstruct_scene"
     bl_label = "Start Photogrammetry"
     bl_description = "Starts the photogrammetry process"
 
     def execute(self, context):
         wm = context.window_manager
-        wm.oneshot_progress = "Starting process..."
-        print("oneShot: ONESHOT_OT_start_photogrammetry: Operator executed. Starting thread.")
+        settings = context.scene.oneshot_settings
+        prefs = context.preferences.addons[__package__].preferences
 
-        # Create and start a new thread for the long-running process
-        thread = threading.Thread(target=run_photogrammetry_process, args=(context,))
+        colmap_executable_path = prefs.colmap_executable_path
+        image_input_folder = settings.image_input_folder
+        delete_workspace = settings.delete_workspace
+
+        # --- Pre-flight checks and setup ---
+        if not image_input_folder or not os.path.exists(image_input_folder):
+            wm.oneshot_progress = "Error: Image input folder not set or invalid."
+            print(f"oneShot: ONESHOT_OT_reconstruct_scene Error: Image input folder invalid: {image_input_folder}")
+            return {'CANCELLED'}
+        
+        if not colmap_executable_path or not os.path.exists(colmap_executable_path):
+            wm.oneshot_progress = "Error: COLMAP executable path not set or invalid."
+            print(f"oneShot: ONESHOT_OT_reconstruct_scene Error: COLMAP executable path invalid: {colmap_executable_path}")
+            return {'CANCELLED'}
+
+        job_id = int(time.time())
+        temp_workspace_root = Path(bpy.app.tempdir) / f"oneshot_job_{job_id}"
+        temp_workspace_root.mkdir(parents=True, exist_ok=True)
+        print(f"oneShot: ONESHOT_OT_reconstruct_scene: Created temporary workspace: {temp_workspace_root}")
+
+        # --- Create and start background thread for COLMAP and import ---
+        wm.oneshot_progress = "Starting background process..."
+        print("oneShot: ONESHOT_OT_reconstruct_scene: Operator executed. Starting thread.")
+
+        thread = threading.Thread(
+            target=run_photogrammetry_process,
+            args=(
+                colmap_executable_path,
+                str(image_input_folder),
+                temp_workspace_root,
+                delete_workspace
+            )
+        )
         thread.start()
 
-        # Store the thread in the window manager for the modal operator to monitor
         global _background_thread
         _background_thread = thread
 
         # Invoke the modal operator to monitor the thread
-        return bpy.ops.oneshot.monitor_photogrammetry('INVOKE_DEFAULT')
+        return bpy.ops.oneshot.reconstruct_monitor('INVOKE_DEFAULT')
 
-class ONESHOT_OT_monitor_photogrammetry(bpy.types.Operator):
-    bl_idname = "oneshot.monitor_photogrammetry"
+class ONESHOT_OT_reconstruct_monitor(bpy.types.Operator):
+    bl_idname = "oneshot.reconstruct_monitor"
     bl_label = "Monitor Photogrammetry"
 
     _timer = None
