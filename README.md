@@ -20,9 +20,7 @@
          ~~                      \::/    /                \::/    /                \::/    /                \::/    /                 ~~                                   
                                   \/____/                  \/____/                  \/____/                  \/____/                                                       
                                                                                                                                                                            
-**One-Click Photogrammetry Solution for Blender**
-
-</div>
+# One-Click Photogrammetry and Camera Tracking for Blender
 
 ---
 
