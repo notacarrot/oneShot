@@ -19,11 +19,13 @@ def register():
     preferences.register()
     ui.register()
     operator.register()
+    bpy.types.WindowManager.photogrammetry_progress = bpy.props.StringProperty(default="")
 
 def unregister():
     preferences.unregister()
     ui.unregister()
     operator.unregister()
+    del bpy.types.WindowManager.photogrammetry_progress
 
 if __name__ == "__main__":
     register()
