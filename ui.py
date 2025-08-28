@@ -1,67 +1,53 @@
 import os
 import bpy
 from bpy.types import PropertyGroup, Panel
-from bpy.props import StringProperty, BoolProperty, EnumProperty
+from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty
 
 class PhotogrammetrySettings(PropertyGroup):
-    video_input_path: StringProperty(
-        name="Video File",
+    input_path: StringProperty(
+        name="Input Video or Image Folder",
         subtype='FILE_PATH',
-        description="Path to the input video file"
-    ) # type: ignore
-    image_output_folder: StringProperty(
-        name="Output Folder for Extracted Images",
+        description="Path to the input video file or image folder"
+    )
+    output_path: StringProperty(
+        name="Output Scene Folder",
         subtype='DIR_PATH',
-        description="Directory where extracted frames will be saved",
-        default=os.path.join(bpy.app.tempdir, "oneshot_frames")
-    ) # type: ignore
-    image_input_folder: StringProperty(
-        name="Input Folder for Reconstruction",
-        subtype='DIR_PATH',
-        description="Directory containing images for 3D reconstruction",
-        default=os.path.join(bpy.app.tempdir, "oneshot_frames")
-    ) # type: ignore
-    reconstruction_output_folder: StringProperty(
-        name="Reconstruction Output Folder",
-        subtype='DIR_PATH',
-        description="Folder to store the COLMAP reconstruction files"
-    ) # type: ignore
+        description="Directory where the scene and reconstruction will be saved"
+    )
     colmap_model_path: StringProperty(
         name="COLMAP Model Path",
-        subtype='FILE_PATH',
-        description="Path to the COLMAP model folder (containing cameras.bin, images.bin, points3D.bin)"
-    ) # type: ignore
+        subtype='DIR_PATH',
+        description="Path to the COLMAP model folder for direct import"
+    )
+    image_dp: StringProperty(
+        name="Image Directory Path",
+        subtype='DIR_PATH',
+        description="Path to the directory containing the images"
+    )
 
-    # Advanced settings
-    image_format: EnumProperty(
-        name="Image Format",
-        items=[
-            ('PNG', "PNG", "Portable Network Graphics"),
-            ('JPG', "JPG", "Joint Photographic Experts Group"),
-        ],
-        default='PNG'
-    ) # type: ignore
-    colmap_quality: EnumProperty(
-        name="COLMAP Quality",
-        items=[
-            ('LOW', "Low", "Low quality COLMAP reconstruction"),
-            ('MEDIUM', "Medium", "Medium quality COLMAP reconstruction"),
-            ('HIGH', "High", "High quality COLMAP reconstruction"),
-            ('EXTREME', "Extreme", "Extreme quality COLMAP reconstruction"),
-        ],
-        default='MEDIUM'
-    ) # type: ignore
-    delete_workspace: BoolProperty(
-        name="Delete Workspace After Completion",
-        description="Delete temporary files and workspace after photogrammetry is complete",
-        default=True
-    ) # type: ignore
-
+    # Advanced Settings
+    use_workspace_images: BoolProperty(name="Use Workspace Images", default=True)
     import_cameras: BoolProperty(name="Import Cameras", default=True)
-    add_background_image_for_each_camera: BoolProperty(name="Add Background Images", default=True)
-    add_camera_motion_as_animation: BoolProperty(name="Animate Cameras", default=True)
+    initial_camera_extent: FloatProperty(name="Initial Camera Extent (in Blender Units)", default=1.0)
+    add_background_image_for_each_camera: BoolProperty(name="Add a Background Image for each Camera", default=True)
+    add_image_plane_for_each_camera: BoolProperty(name="Add an Image Plane for each Camera", default=False)
+    add_depth_maps: BoolProperty(name="Add Depth Maps (EXPERIMENTAL)", default=False)
+    add_camera_motion_as_animation: BoolProperty(name="Add Camera Motion as Animation", default=True)
+    add_background_images_for_animated_camera: BoolProperty(name="Add Background Images for the Animated Camera", default=True)
+    adjust_frame_numbers_of_camera_animation: BoolProperty(name="Adjust Frame Numbers of Camera Animation", default=True)
+    interpolation_type: EnumProperty(name="Interpolation", items=[('LINEAR', 'Linear', ''), ('BEZIER', 'Bezier', ''), ('SINE', 'Sine', '')], default='LINEAR')
+    remove_rotation_discontinuities: BoolProperty(name="Remove Rotation Discontinuities", default=True)
+    suppress_distortion_warnings: BoolProperty(name="Suppress Distortion Warnings", default=True)
+    adjust_render_settings: BoolProperty(name="Adjust Render Settings", default=True)
     import_points: BoolProperty(name="Import Points", default=True)
+    point_cloud_display_sparsity: IntProperty(name="Point Cloud Display Sparsity", default=1, min=1)
+    center_data_around_origin: BoolProperty(name="Center Data Around Origin", default=False)
+    draw_points_in_3d_view_with_opengl: BoolProperty(name="Draw Points in the 3D View with OpenGL", default=True)
+    add_point_data_to_point_cloud_handle: BoolProperty(name="Add point data to the point cloud handle.", default=True)
+    initial_point_size: IntProperty(name="Initial Point Size", default=5, min=1)
     add_points_as_mesh_object: BoolProperty(name="Add Points as Mesh Object", default=False)
+    import_mesh: BoolProperty(name="Import Mesh", default=False)
+    adjust_clipping_distance: BoolProperty(name="Adjust Clipping Distance", default=False)
 
 class ONESHOT_PT_WorkflowPanel(Panel):
     bl_label = "oneShot Workflow"
@@ -74,19 +60,10 @@ class ONESHOT_PT_WorkflowPanel(Panel):
         layout = self.layout
         settings = context.scene.oneshot_settings
 
-        # Section 1: Extract Frames
-        box1 = layout.box()
-        box1.label(text="Step 1: Extract Frames", icon='FILE_MOVIE')
-        box1.prop(settings, "video_input_path")
-        box1.prop(settings, "image_output_folder")
-        box1.operator("oneshot.start_extraction", text="Extract Frames to Folder", icon='RENDER_ANIMATION')
+        layout.prop(settings, "input_path")
+        layout.prop(settings, "output_path")
 
-        # Section 2: Reconstruct Scene
-        box2 = layout.box()
-        box2.label(text="Step 2: Reconstruct Scene", icon='OUTLINER_OB_CAMERA')
-        box2.prop(settings, "image_input_folder")
-        box2.prop(settings, "reconstruction_output_folder")
-        box2.operator("oneshot.reconstruct_scene", text="Generate 3D Scene", icon='PLAY')
+        layout.operator("oneshot.reconstruct_scene", text="Generate Scene", icon='PLAY')
 
         layout.separator()
         wm = context.window_manager
@@ -120,22 +97,33 @@ class ONESHOT_PT_AdvancedSettingsPanel(Panel):
         layout = self.layout
         settings = context.scene.oneshot_settings
 
-        col = layout.column()
-        
-        col.label(text="Reconstruction:")
-        col.prop(settings, "image_format")
-        col.prop(settings, "colmap_quality")
-        col.prop(settings, "delete_workspace")
-        
-        col.separator()
-        
-        col.label(text="Camera Import Options:")
-        col.prop(settings, "import_cameras")
-        col.prop(settings, "add_background_image_for_each_camera")
-        col.prop(settings, "add_camera_motion_as_animation")
-        
-        col.separator()
+        box_camera = layout.box()
+        box_camera.label(text="Import Cameras")
+        box_camera.prop(settings, "import_cameras")
+        box_camera.prop(settings, "initial_camera_extent")
+        box_camera.prop(settings, "add_background_image_for_each_camera")
+        box_camera.prop(settings, "add_image_plane_for_each_camera")
+        box_camera.prop(settings, "add_depth_maps")
+        box_camera.prop(settings, "suppress_distortion_warnings")
+        box_camera.prop(settings, "adjust_render_settings")
 
-        col.label(text="Point Cloud Options:")
-        col.prop(settings, "import_points")
-        col.prop(settings, "add_points_as_mesh_object")
+        box_anim = layout.box()
+        box_anim.label(text="Add Camera Motion as Animation")
+        box_anim.prop(settings, "add_camera_motion_as_animation")
+        box_anim.prop(settings, "add_background_images_for_animated_camera")
+        box_anim.prop(settings, "adjust_frame_numbers_of_camera_animation")
+        box_anim.prop(settings, "interpolation_type")
+        box_anim.prop(settings, "remove_rotation_discontinuities")
+
+        box_points = layout.box()
+        box_points.label(text="Import Points")
+        box_points.prop(settings, "import_points")
+        box_points.prop(settings, "point_cloud_display_sparsity")
+        box_points.prop(settings, "center_data_around_origin")
+        box_points.prop(settings, "draw_points_in_3d_view_with_opengl")
+        box_points.prop(settings, "add_point_data_to_point_cloud_handle")
+        box_points.prop(settings, "initial_point_size")
+        box_points.prop(settings, "add_points_as_mesh_object")
+
+        layout.prop(settings, "import_mesh")
+        layout.prop(settings, "adjust_clipping_distance")

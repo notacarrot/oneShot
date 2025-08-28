@@ -28,8 +28,6 @@ classes = (
     ui.ONESHOT_PT_WorkflowPanel,
     ui.ONESHOT_PT_DirectImportPanel,
     ui.ONESHOT_PT_AdvancedSettingsPanel,
-    operator.ONESHOT_OT_start_extraction,
-    operator.ONESHOT_OT_monitor_extraction,
     operator.ONESHOT_OT_reconstruct_scene,
     operator.ONESHOT_OT_reconstruct_monitor,
     operator.ONESHOT_OT_import_colmap_model,

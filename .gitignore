@@ -1,6 +1,9 @@
 # .gitignore example
 __pycache__/
 *.pyc
+*.txt
 deps/
 importer/__pycache__/
 #never leaving this behind next time
+.gemini/
+gha-creds-*.json
