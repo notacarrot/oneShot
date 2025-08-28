@@ -63,7 +63,9 @@ class ONESHOT_PT_WorkflowPanel(Panel):
         layout.prop(settings, "input_path")
         layout.prop(settings, "output_path")
 
-        layout.operator("oneshot.reconstruct_scene", text="Generate Scene", icon='PLAY')
+        column = layout.column(align=True)
+        column.operator("oneshot.reconstruct_scene", text="Generate Scene", icon='PLAY')
+        column.operator("oneshot.stop_process", text="Stop", icon='PAUSE')
 
         layout.separator()
         wm = context.window_manager

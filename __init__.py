@@ -4,7 +4,7 @@ from .importer.utility import developer_utility
 bl_info = {
     "name": "oneShot",
     "author": "notacarrrot",
-    "version": (4, 0, 0),
+    "version": (0, 1, 5),
     "blender": (4, 0, 0),
     "category": "Import-Export",
     "description": "A modular Blender addon for photogrammetry workflows.",
@@ -31,6 +31,7 @@ classes = (
     operator.ONESHOT_OT_reconstruct_scene,
     operator.ONESHOT_OT_reconstruct_monitor,
     operator.ONESHOT_OT_import_colmap_model,
+    operator.ONESHOT_OT_stop_process,
 )
 
 def register():
