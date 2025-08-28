@@ -72,7 +72,7 @@ class ONESHOT_PT_main_panel(Panel):
         box1.label(text="Step 1: Extract Frames", icon='FILE_MOVIE')
         box1.prop(settings, "video_input_path")
         box1.prop(settings, "image_output_folder")
-        box1.operator("oneshot.extract_frames", text="Extract Frames to Folder", icon='RENDER_ANIMATION')
+        box1.operator("oneshot.start_extraction", text="Extract Frames to Folder", icon='RENDER_ANIMATION')
 
         # Section 2: Reconstruct Scene
         box2 = layout.box()

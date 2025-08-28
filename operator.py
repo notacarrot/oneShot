@@ -9,75 +9,41 @@ from .importer import import_colmap_scene
 
 _background_thread = None
 
-def _extract_frames(video_path: str, output_dir: str, image_format: str) -> bool:
-    temp_scene = None
-    original_scene = bpy.context.window.scene # Store original scene
+def _run_ffmpeg_extraction(context, video_path, output_folder, ffmpeg_path, image_format):
     try:
-        print(f"oneShot: _extract_frames: Starting frame extraction for video: {video_path} to output directory: {output_dir}")
-        # Create a new, temporary scene
-        temp_scene = bpy.data.scenes.new("Frame Extraction Scene")
-        print(f"oneShot: _extract_frames: Created temporary scene: {temp_scene.name}")
+        context.window_manager.oneshot_progress = "Step 1: Extracting Frames..."
         
-        # Make the new scene active for operations
-        bpy.context.window.scene = temp_scene
-        print(f"oneShot: _extract_frames: Set active scene to: {temp_scene.name}")
+        output_pattern = os.path.join(output_folder, f"%04d.{image_format}")
+        command = [
+            ffmpeg_path,
+            "-i", video_path,
+            output_pattern
+        ]
 
-        # Ensure sequence editor exists
-        if not temp_scene.sequence_editor:
-            temp_scene.sequence_editor_create()
-            print("oneShot: _extract_frames: Sequence editor created for temporary scene.")
-        else:
-            print("oneShot: _extract_frames: Sequence editor already exists for temporary scene.")
+        print(f"oneShot: Running FFmpeg command: {' '.join(command)}")
+        
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
 
-        # Add the video as a movie strip
-        bpy.ops.sequencer.movie_strip_add(filepath=video_path, frame_start=1)
-        print(f"oneShot: _extract_frames: Added movie strip from {video_path}.")
-
-        # Get a reference to the newly created video strip
-        movie_strip = None
-        for strip in temp_scene.sequence_editor.sequences:
-            if strip.type == 'MOVIE' and strip.filepath == video_path:
-                movie_strip = strip
+        while True:
+            output = process.stdout.readline()
+            if output == '' and process.poll() is not None:
                 break
+            if output:
+                line = output.strip()
+                print(line)
+                context.window_manager.oneshot_progress_detail = line
         
-        if not movie_strip:
-            print(f"oneShot: _extract_frames Error: Could not find movie strip for {video_path}")
-            return False
-        print(f"oneShot: _extract_frames: Found movie strip: {movie_strip.name}")
-
-        # Set the temporary scene's frame_end to match the video strip's duration
-        temp_scene.frame_end = movie_strip.frame_final_duration
-        print(f"oneShot: _extract_frames: Set scene frame_end to: {temp_scene.frame_end}")
-
-        # Configure the scene's render settings
-        temp_scene.render.filepath = output_dir
-        temp_scene.render.image_settings.file_format = image_format
-        temp_scene.render.image_settings.color_mode = 'RGB'
-        print(f"oneShot: _extract_frames: Configured render settings: filepath={output_dir}, format={image_format}, color_mode=RGB")
-
-        # Run the animation render
-        print("oneShot: _extract_frames: Starting animation render...")
-        bpy.ops.render.render(animation=True, scene=temp_scene.name)
-        print("oneShot: _extract_frames: Animation render complete.")
-
-        print("oneShot: _extract_frames: Frame extraction successful.")
-        return True
+        rc = process.poll()
+        if rc != 0:
+            context.window_manager.oneshot_progress = "Error: Frame extraction failed."
+            print(f"oneShot: FFmpeg command failed with return code {rc}")
+            return
+            
+        context.window_manager.oneshot_progress = "Frame Extraction Complete!"
 
     except Exception as e:
-        print(f"oneShot: _extract_frames Error: An error occurred during frame extraction: {e}")
-        return False
-    finally:
-        print("oneShot: _extract_frames: Entering finally block for cleanup.")
-        # Restore original scene context
-        if temp_scene and original_scene:
-            bpy.context.window.scene = original_scene
-            print(f"oneShot: _extract_frames: Restored original scene: {original_scene.name}")
-        
-        # Ensure the temporary scene is deleted
-        if temp_scene and temp_scene.name in bpy.data.scenes:
-            print(f"oneShot: _extract_frames: Deleting temporary scene: {temp_scene.name}")
-            bpy.data.scenes.remove(temp_scene)
-            print("oneShot: _extract_frames: Temporary scene deleted.")
+        context.window_manager.oneshot_progress = "Error during frame extraction. Check console."
+        print(f"oneShot: An unexpected error occurred during FFmpeg execution: {e}")
 
 def _run_colmap(context, colmap_executable_path: str, image_directory: str, workspace_path: Path) -> Path | None:
     try:
@@ -115,7 +81,7 @@ def _run_colmap(context, colmap_executable_path: str, image_directory: str, work
         print("oneShot: _run_colmap: COLMAP execution successful.")
         
         # Return the path to the sparse reconstruction directory
-        sparse_reconstruction_path = output_path
+        sparse_reconstruction_path = output_path / "sparse" / "0"
         if sparse_reconstruction_path.exists():
             print(f"oneShot: _run_colmap: Sparse reconstruction found at: {sparse_reconstruction_path}")
             return sparse_reconstruction_path
@@ -155,77 +121,81 @@ def run_photogrammetry_process(context, colmap_exe_path: str, image_dir: str, wo
         print("oneShot: run_photogrammetry_process: Entering finally block for cleanup.")
         if workspace_dir and workspace_dir.exists():
             if delete_workspace:
-                shutil.rmtree(workspace_dir)
-                print(f"oneShot: run_photogrammetry_process: Cleaned up temporary workspace: {workspace_dir}")
+                images_path = workspace_dir / "images"
+                if images_path.exists() and images_path.is_dir():
+                    shutil.rmtree(images_path)
+                    print(f"oneShot: run_photogrammetry_process: Cleaned up images subfolder: {images_path}")
+                else:
+                    print(f"oneShot: run_photogrammetry_process: No images subfolder to clean up at {images_path}.")
             else:
                 print(f"oneShot: run_photogrammetry_process: Temporary workspace retained: {workspace_dir}")
         else:
             print("oneShot: run_photogrammetry_process: No temporary workspace to clean up or retain.")
 
-class ONESHOT_OT_extract_frames(bpy.types.Operator):
-    bl_idname = "oneshot.extract_frames"
+class ONESHOT_OT_start_extraction(bpy.types.Operator):
+    bl_idname = "oneshot.start_extraction"
     bl_label = "Extract Frames"
     bl_description = "Extracts frames from the video to the specified folder using FFmpeg"
 
     def execute(self, context):
-        wm = context.window_manager
         settings = context.scene.oneshot_settings
         prefs = context.preferences.addons[__package__].preferences
 
         video_input_path = settings.video_input_path
         image_output_folder = settings.image_output_folder
         ffmpeg_executable_path = prefs.ffmpeg_executable_path
-        image_format = settings.image_format.lower() # png or jpg
+        image_format = settings.image_format.lower()
 
-        # --- Validation ---
-        if not video_input_path or not os.path.exists(video_input_path):
-            self.report({'ERROR'}, "Video input path not set or invalid.")
+        if not all([video_input_path, image_output_folder, ffmpeg_executable_path]):
+            self.report({'ERROR'}, "One or more paths are not set.")
             return {'CANCELLED'}
-        
-        if not image_output_folder:
-            self.report({'ERROR'}, "Image output folder not set.")
-            return {'CANCELLED'}
-        
+
         if not os.path.exists(image_output_folder):
-            try:
-                os.makedirs(image_output_folder)
-            except OSError as e:
-                self.report({'ERROR'}, f"Could not create output directory: {e}")
-                return {'CANCELLED'}
+            os.makedirs(image_output_folder)
 
-        if not ffmpeg_executable_path or not os.path.exists(ffmpeg_executable_path):
-            self.report({'ERROR'}, "FFmpeg executable path not set or invalid. Please configure in addon preferences.")
-            return {'CANCELLED'}
+        thread = threading.Thread(
+            target=_run_ffmpeg_extraction,
+            args=(context, video_input_path, image_output_folder, ffmpeg_executable_path, image_format)
+        )
+        thread.start()
 
-        # --- FFmpeg Command ---
-        # Example: ffmpeg -i input.mp4 output_folder/%04d.png
-        output_pattern = os.path.join(image_output_folder, f"%04d.{image_format}")
-        command = [
-            ffmpeg_executable_path,
-            "-i", video_input_path,
-            output_pattern
-        ]
+        global _background_thread
+        _background_thread = thread
 
-        wm.oneshot_progress = "Extracting frames with FFmpeg..."
-        print(f"oneShot: Running FFmpeg command: {' '.join(command)}")
+        return bpy.ops.oneshot.monitor_extraction('INVOKE_DEFAULT')
 
-        try:
-            process = subprocess.run(command, capture_output=True, text=True, check=True)
-            print(f"oneShot: FFmpeg STDOUT:\n{process.stdout}")
-            print(f"oneShot: FFmpeg STDERR:\n{process.stderr}")
-            self.report({'INFO'}, "Frame extraction successful!")
-            wm.oneshot_progress = "Frame extraction complete."
+class ONESHOT_OT_monitor_extraction(bpy.types.Operator):
+    bl_idname = "oneshot.monitor_extraction"
+    bl_label = "Monitor Extraction"
+
+    _timer = None
+    _thread = None
+
+    def invoke(self, context, event):
+        global _background_thread
+        self._thread = _background_thread
+
+        if not self._thread or not self._thread.is_alive():
+            self.report({'INFO'}, "Extraction process not running.")
             return {'FINISHED'}
-        except subprocess.CalledProcessError as e:
-            self.report({'ERROR'}, f"FFmpeg command failed: {e.stderr}")
-            wm.oneshot_progress = "Error: Frame extraction failed."
-            print(f"oneShot: FFmpeg Error: {e.stderr}")
-            return {'CANCELLED'}
-        except Exception as e:
-            self.report({'ERROR'}, f"An unexpected error occurred during FFmpeg execution: {e}")
-            wm.oneshot_progress = "Error: Frame extraction failed."
-            print(f"oneShot: Unexpected FFmpeg Error: {e}")
-            return {'CANCELLED'}
+
+        self._timer = context.window_manager.event_timer_add(0.1, window=context.window)
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event):
+        if event.type == 'TIMER':
+            if not self._thread.is_alive():
+                context.window_manager.event_timer_remove(self._timer)
+                global _background_thread
+                _background_thread = None
+                return {'FINISHED'}
+            else:
+                context.area.tag_redraw()
+        return {'PASS_THROUGH'}
+
+    def cancel(self, context):
+        context.window_manager.event_timer_remove(self._timer)
 
 class ONESHOT_OT_reconstruct_scene(bpy.types.Operator):
     bl_idname = "oneshot.reconstruct_scene"
@@ -242,28 +212,14 @@ class ONESHOT_OT_reconstruct_scene(bpy.types.Operator):
         delete_workspace = settings.delete_workspace
         reconstruction_output_folder = settings.reconstruction_output_folder
 
-        # --- Pre-flight checks and setup ---
-        if not image_input_folder or not os.path.exists(image_input_folder):
-            wm.oneshot_progress = "Error: Image input folder not set or invalid."
-            print(f"oneShot: ONESHOT_OT_reconstruct_scene Error: Image input folder invalid: {image_input_folder}")
-            return {'CANCELLED'}
-        
-        if not colmap_executable_path or not os.path.exists(colmap_executable_path):
-            wm.oneshot_progress = "Error: COLMAP executable path not set or invalid."
-            print(f"oneShot: ONESHOT_OT_reconstruct_scene Error: COLMAP executable path invalid: {colmap_executable_path}")
-            return {'CANCELLED'}
-
-        if not reconstruction_output_folder:
-            self.report({'ERROR'}, "Reconstruction output folder not set.")
+        if not all([image_input_folder, colmap_executable_path, reconstruction_output_folder]):
+            self.report({'ERROR'}, "One or more paths are not set.")
             return {'CANCELLED'}
         
         workspace_path = Path(reconstruction_output_folder)
         workspace_path.mkdir(parents=True, exist_ok=True)
-        print(f"oneShot: ONESHOT_OT_reconstruct_scene: Using workspace: {workspace_path}")
 
-        # --- Create and start background thread for COLMAP and import ---
         wm.oneshot_progress = "Starting background process..."
-        print("oneShot: ONESHOT_OT_reconstruct_scene: Operator executed. Starting thread.")
 
         thread = threading.Thread(
             target=run_photogrammetry_process,
@@ -280,7 +236,6 @@ class ONESHOT_OT_reconstruct_scene(bpy.types.Operator):
         global _background_thread
         _background_thread = thread
 
-        # Invoke the modal operator to monitor the thread
         return bpy.ops.oneshot.reconstruct_monitor('INVOKE_DEFAULT')
 
 class ONESHOT_OT_reconstruct_monitor(bpy.types.Operator):
@@ -291,37 +246,27 @@ class ONESHOT_OT_reconstruct_monitor(bpy.types.Operator):
     _thread = None
 
     def invoke(self, context, event):
-        wm = context.window_manager
         global _background_thread
         self._thread = _background_thread
 
         if not self._thread or not self._thread.is_alive():
             self.report({'INFO'}, "Photogrammetry process not running.")
-            print("oneShot: ONESHOT_OT_monitor_photogrammetry: Process not running or thread not found.")
             return {'FINISHED'}
 
-        self._timer = wm.event_timer_add(0.1, window=context.window)
-        wm.modal_handler_add(self)
-        print("oneShot: ONESHOT_OT_monitor_photogrammetry: Monitoring started.")
+        self._timer = context.window_manager.event_timer_add(0.1, window=context.window)
+        context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
     def modal(self, context, event):
         if event.type == 'TIMER':
             if not self._thread.is_alive():
-                self.report({'INFO'}, "Photogrammetry process finished.")
                 context.window_manager.event_timer_remove(self._timer)
+                global _background_thread
                 _background_thread = None
-                print("oneShot: ONESHOT_OT_monitor_photogrammetry: Process finished, monitoring stopped.")
                 return {'FINISHED'}
             else:
-                # Force UI redraw to update progress text
                 context.area.tag_redraw()
         return {'PASS_THROUGH'}
 
     def cancel(self, context):
         context.window_manager.event_timer_remove(self._timer)
-        self.report({'INFO'}, "Photogrammetry monitoring cancelled.")
-        print("oneShot: ONESHOT_OT_monitor_photogrammetry: Monitoring cancelled.")
-        if hasattr(context.window_manager, 'oneshot_photogrammetry_thread'):
-            _background_thread = None
-            print("oneShot: ONESHOT_OT_monitor_photogrammetry: Thread reference cleared.") # type: ignore

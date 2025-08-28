@@ -22,7 +22,8 @@ classes = (
     preferences.ONESHOT_OT_install_ffmpeg,
     ui.PhotogrammetrySettings,
     ui.ONESHOT_PT_main_panel,
-    operator.ONESHOT_OT_extract_frames,
+    operator.ONESHOT_OT_start_extraction,
+    operator.ONESHOT_OT_monitor_extraction,
     operator.ONESHOT_OT_reconstruct_scene,
     operator.ONESHOT_OT_reconstruct_monitor,
 )
