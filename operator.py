@@ -49,13 +49,14 @@ def _run_colmap(context, colmap_executable_path: str, image_directory: str, work
     try:
         print(f"oneShot: _run_colmap: Starting COLMAP execution. Executable: {colmap_executable_path}, Images: {image_directory}, Workspace: {workspace_path})")
         database_path = workspace_path / "database.db"
-        output_path = workspace_path / "output"
-        output_path.mkdir(parents=True, exist_ok=True)
+        
+        sparse_path = workspace_path / "sparse"
+        sparse_path.mkdir(parents=True, exist_ok=True)
 
         commands = [
             [colmap_executable_path, "feature_extractor", "--database_path", str(database_path), "--image_path", str(image_directory), "--ImageReader.single_camera", "1", "--SiftExtraction.use_gpu", "1"],
-            [colmap_executable_path, "sequential_matcher", "--database_path", str(database_path)], # Changed from exhaustive_matcher
-            [colmap_executable_path, "mapper", "--database_path", str(database_path), "--image_path", str(image_directory), "--output_path", str(output_path)],
+            [colmap_executable_path, "sequential_matcher", "--database_path", str(database_path)],
+            [colmap_executable_path, "mapper", "--database_path", str(database_path), "--image_path", str(image_directory), "--output_path", str(sparse_path)],
         ]
 
         for cmd in commands:
@@ -80,20 +81,22 @@ def _run_colmap(context, colmap_executable_path: str, image_directory: str, work
         
         print("oneShot: _run_colmap: COLMAP execution successful.")
         
-        # Return the path to the sparse reconstruction directory
-        sparse_reconstruction_path = output_path / "sparse" / "0"
-        if sparse_reconstruction_path.exists():
-            print(f"oneShot: _run_colmap: Sparse reconstruction found at: {sparse_reconstruction_path}")
-            return sparse_reconstruction_path
+        reconstruction_path = sparse_path / "0"
+        if reconstruction_path.exists():
+            print(f"oneShot: _run_colmap: Sparse reconstruction found at: {reconstruction_path}")
+            return reconstruction_path
         else:
-            print(f"oneShot: _run_colmap Error: Sparse reconstruction directory not found at: {sparse_reconstruction_path}")
+            if (sparse_path / "cameras.bin").exists():
+                print(f"oneShot: _run_colmap: Found model files directly in sparse folder. Returning: {sparse_path}")
+                return sparse_path
+            print(f"oneShot: _run_colmap Error: Sparse reconstruction directory not found at: {reconstruction_path}")
             return None
 
     except Exception as e:
         print(f"oneShot: _run_colmap Error: An error occurred during COLMAP execution: {e}")
         return None
 
-def run_photogrammetry_process(context, colmap_exe_path: str, image_dir: str, workspace_dir: Path, delete_workspace: bool):
+def run_photogrammetry_process(context, settings, colmap_exe_path: str, image_dir: str, workspace_dir: Path, delete_workspace: bool):
     try:
         print("oneShot: run_photogrammetry_process: Starting background photogrammetry process.")
         
@@ -107,7 +110,14 @@ def run_photogrammetry_process(context, colmap_exe_path: str, image_dir: str, wo
 
         context.window_manager.oneshot_progress = "Step 3/3: Importing Scene..."
         print("oneShot: run_photogrammetry_process: Calling import_colmap_scene...")
-        if not import_colmap_scene(str(sparse_reconstruction_path)):
+        if not import_colmap_scene(
+            reconstruction_dir_path=str(sparse_reconstruction_path),
+            import_cameras=settings.import_cameras,
+            add_background_image=settings.add_background_image_for_each_camera,
+            add_camera_motion=settings.add_camera_motion_as_animation,
+            import_points=settings.import_points,
+            add_points_as_mesh_object=settings.add_points_as_mesh_object
+        ):
             context.window_manager.oneshot_progress = "Error: Scene import failed."
             print("oneShot: run_photogrammetry_process Error: Scene import failed.")
             return
@@ -128,9 +138,7 @@ def run_photogrammetry_process(context, colmap_exe_path: str, image_dir: str, wo
                 else:
                     print(f"oneShot: run_photogrammetry_process: No images subfolder to clean up at {images_path}.")
             else:
-                print(f"oneShot: run_photogrammetry_process: Temporary workspace retained: {workspace_dir}")
-        else:
-            print("oneShot: run_photogrammetry_process: No temporary workspace to clean up or retain.")
+                print(f"oneShot: run_photogrammetry_process: Workspace retained at {workspace_dir}")
 
 class ONESHOT_OT_start_extraction(bpy.types.Operator):
     bl_idname = "oneshot.start_extraction"
@@ -225,6 +233,7 @@ class ONESHOT_OT_reconstruct_scene(bpy.types.Operator):
             target=run_photogrammetry_process,
             args=(
                 context,
+                settings,
                 colmap_executable_path,
                 str(image_input_folder),
                 workspace_path,
@@ -270,3 +279,32 @@ class ONESHOT_OT_reconstruct_monitor(bpy.types.Operator):
 
     def cancel(self, context):
         context.window_manager.event_timer_remove(self._timer)
+
+class ONESHOT_OT_import_colmap_model(bpy.types.Operator):
+    bl_idname = "oneshot.import_colmap_model"
+    bl_label = "Import COLMAP Model"
+    bl_description = "Directly import a COLMAP model"
+
+    def execute(self, context):
+        settings = context.scene.oneshot_settings
+        
+        model_path = settings.colmap_model_path
+        if not model_path or not os.path.isdir(model_path):
+            self.report({'ERROR'}, "COLMAP model path is not valid.")
+            return {'CANCELLED'}
+
+        success = import_colmap_scene(
+            reconstruction_dir_path=model_path,
+            import_cameras=settings.import_cameras,
+            add_background_image=settings.add_background_image_for_each_camera,
+            add_camera_motion=settings.add_camera_motion_as_animation,
+            import_points=settings.import_points,
+            add_points_as_mesh_object=settings.add_points_as_mesh_object
+        )
+
+        if success:
+            self.report({'INFO'}, "COLMAP model imported successfully.")
+        else:
+            self.report({'ERROR'}, "Failed to import COLMAP model.")
+
+        return {'FINISHED'}

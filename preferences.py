@@ -5,172 +5,176 @@ import zipfile
 import threading
 import os
 from pathlib import Path
+import importlib
+import subprocess
+import sys
 
-# Worker function for COLMAP installation
+# --- Dependency Management ---
+
+optional_dependencies = [
+    "laspy",
+    "pylas",
+    "imageio",
+    "plyfile",
+]
+
+def is_module_installed(module_name):
+    """Checks if a Python module is installed."""
+    try:
+        importlib.invalidate_caches()
+        importlib.import_module(module_name)
+        return True
+    except ImportError:
+        return False
+
+def run_pip(args):
+    """Runs a pip command and waits for it to complete."""
+    try:
+        subprocess.check_call([sys.executable, "-m", "ensurepip"])
+        process = subprocess.Popen(
+            [sys.executable, "-m", "pip"] + args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding='utf-8',
+            errors='replace'
+        )
+        while True:
+            output = process.stdout.readline()
+            if output == '' and process.poll() is not None:
+                break
+            if output:
+                print(output.strip())
+        return process.poll()
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"Error running pip: {e}")
+        return 1
+
+class ONESHOT_OT_install_dependencies(bpy.types.Operator):
+    bl_idname = "oneshot.install_dependencies"
+    bl_label = "Install Optional Dependencies"
+    bl_description = "Install optional Python packages for extended file format support."
+
+    def execute(self, context):
+        self.report({'INFO'}, "Installing optional dependencies... Check console for progress.")
+        return_code = run_pip(["install"] + optional_dependencies)
+        if return_code == 0:
+            self.report({'INFO'}, "Optional dependencies installed successfully.")
+        else:
+            self.report({'ERROR'}, "Failed to install one or more dependencies.")
+        return {'FINISHED'}
+
+class ONESHOT_OT_uninstall_dependencies(bpy.types.Operator):
+    bl_idname = "oneshot.uninstall_dependencies"
+    bl_label = "Uninstall Optional Dependencies"
+    bl_description = "Uninstall optional Python packages."
+
+    def execute(self, context):
+        self.report({'INFO'}, "Uninstalling optional dependencies... Check console for progress.")
+        return_code = run_pip(["uninstall", "-y"] + optional_dependencies)
+        if return_code == 0:
+            self.report({'INFO'}, "Optional dependencies uninstalled successfully.")
+        else:
+            self.report({'ERROR'}, "Failed to uninstall one or more dependencies.")
+        return {'FINISHED'}
+
+# --- Core Addon Preferences and Operators ---
+
 def _run_installation(context):
     print("oneShot: Starting COLMAP installation worker thread...")
     try:
-        # Get addon path
         addon_path = Path(__file__).parent
         deps_folder = addon_path / "deps"
-        print(f"oneShot: Addon path: {addon_path}, Dependencies folder: {deps_folder}")
         deps_folder.mkdir(parents=True, exist_ok=True)
-        print("oneShot: Dependencies folder ensured to exist.")
 
-        # Check OS
         current_os = platform.system()
-        print(f"oneShot: Detected OS: {current_os}")
         if current_os == "Windows":
             download_url = "https://github.com/colmap/colmap/releases/download/3.12.5/colmap-x64-windows-cuda.zip"
             executable_name = "colmap.exe"
             os_tag = "windows-cuda"
         else:
-            print(f"Error: Unsupported operating system for COLMAP download: {current_os}")
+            print(f"Error: Unsupported OS for COLMAP download: {current_os}")
             return
 
-        # Download
-        print(f"oneShot: Downloading COLMAP from {download_url}...")
         zip_file_path = deps_folder / f"colmap_{os_tag}.zip"
-        print(f"oneShot: Downloading to: {zip_file_path}")
         with requests.get(download_url, stream=True) as r:
             r.raise_for_status()
             with open(zip_file_path, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
-        print("oneShot: Download complete.")
 
-        # Unzip
-        print("oneShot: Unzipping...")
         with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
             zip_ref.extractall(deps_folder)
-        print("oneShot: Unzipping complete.")
 
-        # Find Executable
-        print(f"oneShot: Searching for {executable_name} in {deps_folder}...")
-        colmap_executable = None
-        for path in deps_folder.glob(f"**/{executable_name}"):
-            if path.is_file():
-                colmap_executable = path
-                break
+        colmap_executable = next(deps_folder.glob(f"**/{executable_name}"), None)
 
         if colmap_executable:
-            print(f"oneShot: Found executable at: {colmap_executable}")
-            # Save Path to preferences
-            print(f"oneShot: Saving executable path to preferences: {colmap_executable}")
             prefs = context.preferences.addons[__package__].preferences
             prefs.colmap_executable_path = str(colmap_executable)
             print("COLMAP installation successful!")
         else:
             print(f"Error: Could not find {executable_name} after extraction.")
 
-        # Cleanup
         if zip_file_path.exists():
-            print(f"oneShot: Cleaning up downloaded zip file: {zip_file_path}")
             zip_file_path.unlink()
-            print("Cleaned up downloaded zip file.")
 
-    except requests.exceptions.RequestException as e:
-        print(f"oneShot Error: Network error during COLMAP installation: {e}")
-    except zipfile.BadZipFile:
-        print("oneShot Error: Downloaded file is not a valid zip file.")
     except Exception as e:
-        print(f"oneShot Error: An unexpected error occurred during COLMAP installation: {e}")
+        print(f"oneShot Error: {e}")
 
-# Worker function for FFmpeg installation
 def _run_ffmpeg_installation(context):
-    print("oneShot: Starting FFmpeg installation worker thread...")
+    print("oneShot: Starting FFmpeg installation...")
     try:
-        # Get addon path
         addon_path = Path(__file__).parent
         deps_folder = addon_path / "deps"
-        print(f"oneShot: Addon path: {addon_path}, Dependencies folder: {deps_folder}")
         deps_folder.mkdir(parents=True, exist_ok=True)
-        print("oneShot: Dependencies folder ensured to exist.")
 
-        # Check OS
         current_os = platform.system()
-        print(f"oneShot: Detected OS: {current_os}")
         if current_os == "Windows":
-            # Using gyan.dev for static builds
-            download_url = "https://github.com/GyanD/codexffmpeg/releases/download/8.0/ffmpeg-8.0-full_build.zip" # UPDATED URL
+            download_url = "https://github.com/GyanD/codexffmpeg/releases/download/8.0/ffmpeg-8.0-full_build.zip"
             executable_name = "ffmpeg.exe"
         else:
-            print(f"Error: Unsupported operating system for FFmpeg download: {current_os}")
+            print(f"Error: Unsupported OS for FFmpeg download: {current_os}")
             return
 
-        print(f"oneShot: Downloading FFmpeg from {download_url}...")
-        zip_file_path = deps_folder / "ffmpeg-release-full.zip" # UPDATED FILENAME
-        print(f"oneShot: Downloading to: {zip_file_path}")
+        zip_file_path = deps_folder / "ffmpeg-release-full.zip"
         with requests.get(download_url, stream=True) as r:
             r.raise_for_status()
             with open(zip_file_path, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
-        print("oneShot: Download complete.")
 
-        # Unzip .zip file (standard zipfile module)
-        print("oneShot: Extracting FFmpeg...")
-        with zipfile.ZipFile(zip_file_path, 'r') as zip_ref: # UPDATED EXTRACTION LOGIC
+        with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
             zip_ref.extractall(deps_folder)
-        print("oneShot: Extraction complete.")
 
-        # Find Executable
-        print(f"oneShot: Searching for {executable_name} in {deps_folder}...")
-        ffmpeg_executable = None
-        for path in deps_folder.glob(f"**/{executable_name}"):
-            if path.is_file():
-                ffmpeg_executable = path
-                break
+        ffmpeg_executable = next(deps_folder.glob(f"**/{executable_name}"), None)
 
         if ffmpeg_executable:
-            print(f"oneShot: Found executable at: {ffmpeg_executable}")
-            # Save Path to preferences
-            print(f"oneShot: Saving executable path to preferences: {ffmpeg_executable}")
             prefs = context.preferences.addons[__package__].preferences
             prefs.ffmpeg_executable_path = str(ffmpeg_executable)
             print("FFmpeg installation successful!")
         else:
             print(f"Error: Could not find {executable_name} after extraction.")
 
-        # Cleanup
         if zip_file_path.exists():
-            print(f"oneShot: Cleaning up downloaded zip file: {zip_file_path}") # UPDATED MESSAGE
             zip_file_path.unlink()
-            print("Cleaned up downloaded zip file.") # UPDATED MESSAGE
 
-    except requests.exceptions.RequestException as e:
-        print(f"oneShot Error: Network error during FFmpeg installation: {e}")
-    except zipfile.BadZipFile:
-        print("oneShot Error: Downloaded file is not a valid zip file.") # ADDED THIS EXCEPTION
     except Exception as e:
-        print(f"oneShot Error: An unexpected error occurred during FFmpeg installation: {e}")
+        print(f"oneShot Error: {e}")
 
 class ONESHOT_OT_install_ffmpeg(bpy.types.Operator):
     bl_idname = "oneshot.install_ffmpeg"
     bl_label = "Download and Install FFmpeg"
-    bl_description = "Download and install FFmpeg for your operating system"
-
     def execute(self, context):
-        print("oneShot: ONESHOT_OT_install_ffmpeg operator executed.")
-        # Start installation in a new thread to avoid blocking Blender UI
-        install_thread = threading.Thread(target=_run_ffmpeg_installation, args=(context,))
-        install_thread.start()
-        print("oneShot: FFmpeg installation thread started.")
-        self.report({'INFO'}, "FFmpeg installation started in background. Check console for progress.")
+        threading.Thread(target=_run_ffmpeg_installation, args=(context,)).start()
+        self.report({'INFO'}, "FFmpeg installation started. See console for progress.")
         return {'FINISHED'}
 
 class ONESHOT_OT_install_colmap(bpy.types.Operator):
     bl_idname = "oneshot.install_colmap"
     bl_label = "Download and Install COLMAP"
-    bl_description = "Download and install COLMAP for your operating system"
-
     def execute(self, context):
-        print("oneShot: ONESHOT_OT_install_colmap operator executed.")
-        # Start installation in a new thread to avoid blocking Blender UI
-        install_thread = threading.Thread(target=_run_installation, args=(context,))
-        install_thread.start()
-        print("oneShot: COLMAP installation thread started.")
-        self.report({'INFO'}, "COLMAP installation started in background. Check console for progress.")
+        threading.Thread(target=_run_installation, args=(context,)).start()
+        self.report({'INFO'}, "COLMAP installation started. See console for progress.")
         return {'FINISHED'}
 
 class OneShotPreferences(bpy.types.AddonPreferences):
@@ -178,26 +182,30 @@ class OneShotPreferences(bpy.types.AddonPreferences):
 
     colmap_executable_path: bpy.props.StringProperty(
         name="COLMAP Executable Path",
-        subtype='FILE_PATH',
-        description="Path to the COLMAP executable (colmap.bat or colmap.exe)"
-    ) # type: ignore
+        subtype='FILE_PATH'
+    )
     ffmpeg_executable_path: bpy.props.StringProperty(
         name="FFmpeg Executable Path",
-        subtype='FILE_PATH',
-        description="Path to the FFmpeg executable (ffmpeg.exe)"
-    ) # type: ignore
+        subtype='FILE_PATH'
+    )
 
     def draw(self, context):
         layout = self.layout
-
-        # Display the executable path property
         layout.prop(self, "colmap_executable_path")
-
-        # Button to trigger the installation operator
-        row = layout.row()
-        row.operator(ONESHOT_OT_install_colmap.bl_idname, text="Download & Install COLMAP", icon='IMPORT')
-
-        # NEW SECTION FOR FFMPEG
+        layout.operator(ONESHOT_OT_install_colmap.bl_idname, text="Download & Install COLMAP", icon='IMPORT')
         layout.prop(self, "ffmpeg_executable_path")
-        row = layout.row()
-        row.operator(ONESHOT_OT_install_ffmpeg.bl_idname, text="Download & Install FFmpeg", icon='IMPORT')
+        layout.operator(ONESHOT_OT_install_ffmpeg.bl_idname, text="Download & Install FFmpeg", icon='IMPORT')
+
+        box = layout.box()
+        box.label(text="Optional Importer Dependencies", icon='PACKAGE')
+        box.label(text="For other formats, not required for the main COLMAP workflow.")
+        row = box.row()
+        row.operator(ONESHOT_OT_install_dependencies.bl_idname, icon='CONSOLE')
+        row.operator(ONESHOT_OT_uninstall_dependencies.bl_idname, icon='TRASH')
+
+        for dep in optional_dependencies:
+            row = box.row()
+            row.label(text=f"- {dep}:")
+            status_label = "Installed" if is_module_installed(dep) else "Not Installed"
+            icon = 'CHECKMARK' if is_module_installed(dep) else 'X'
+            row.label(text=status_label, icon=icon)

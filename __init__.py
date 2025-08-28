@@ -1,3 +1,5 @@
+import os
+from .importer.utility import developer_utility
 
 bl_info = {
     "name": "oneShot",
@@ -20,15 +22,26 @@ classes = (
     preferences.OneShotPreferences,
     preferences.ONESHOT_OT_install_colmap,
     preferences.ONESHOT_OT_install_ffmpeg,
+    preferences.ONESHOT_OT_install_dependencies,
+    preferences.ONESHOT_OT_uninstall_dependencies,
     ui.PhotogrammetrySettings,
-    ui.ONESHOT_PT_main_panel,
+    ui.ONESHOT_PT_WorkflowPanel,
+    ui.ONESHOT_PT_DirectImportPanel,
+    ui.ONESHOT_PT_AdvancedSettingsPanel,
     operator.ONESHOT_OT_start_extraction,
     operator.ONESHOT_OT_monitor_extraction,
     operator.ONESHOT_OT_reconstruct_scene,
     operator.ONESHOT_OT_reconstruct_monitor,
+    operator.ONESHOT_OT_import_colmap_model,
 )
 
 def register():
+    # Ensure all importer modules are loaded
+    importer_path = os.path.join(os.path.dirname(__file__), "importer")
+    developer_utility.setup_addon_modules(
+        importer_path, "oneShot.importer", "bpy" in locals()
+    )
+
     print("oneShot: Registering addon...")
     for cls in classes:
         bpy.utils.register_class(cls)

@@ -26,10 +26,13 @@ class PhotogrammetrySettings(PropertyGroup):
         subtype='DIR_PATH',
         description="Folder to store the COLMAP reconstruction files"
     ) # type: ignore
-    show_advanced: BoolProperty(
-        name="Show Advanced Settings",
-        default=False
+    colmap_model_path: StringProperty(
+        name="COLMAP Model Path",
+        subtype='FILE_PATH',
+        description="Path to the COLMAP model folder (containing cameras.bin, images.bin, points3D.bin)"
     ) # type: ignore
+
+    # Advanced settings
     image_format: EnumProperty(
         name="Image Format",
         items=[
@@ -54,18 +57,22 @@ class PhotogrammetrySettings(PropertyGroup):
         default=True
     ) # type: ignore
 
-class ONESHOT_PT_main_panel(Panel):
-    bl_label = "OneShot Photogrammetry"
-    bl_idname = "ONESHOT_PT_main_panel"
+    import_cameras: BoolProperty(name="Import Cameras", default=True)
+    add_background_image_for_each_camera: BoolProperty(name="Add Background Images", default=True)
+    add_camera_motion_as_animation: BoolProperty(name="Animate Cameras", default=True)
+    import_points: BoolProperty(name="Import Points", default=True)
+    add_points_as_mesh_object: BoolProperty(name="Add Points as Mesh Object", default=False)
+
+class ONESHOT_PT_WorkflowPanel(Panel):
+    bl_label = "oneShot Workflow"
+    bl_idname = "ONESHOT_PT_WorkflowPanel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "OneShot"
 
     def draw(self, context):
         layout = self.layout
-        scene = context.scene
-        wm = context.window_manager
-        settings = scene.oneshot_settings
+        settings = context.scene.oneshot_settings
 
         # Section 1: Extract Frames
         box1 = layout.box()
@@ -81,19 +88,54 @@ class ONESHOT_PT_main_panel(Panel):
         box2.prop(settings, "reconstruction_output_folder")
         box2.operator("oneshot.reconstruct_scene", text="Generate 3D Scene", icon='PLAY')
 
-        # Advanced Settings (now part of Step 2)
-        box_advanced = box2.box()
-        row = box_advanced.row()
-        row.prop(settings, "show_advanced",
-                 icon='DOWNARROW_HLT' if settings.show_advanced else 'RIGHTARROW',
-                 icon_only=True, emboss=False)
-        row.label(text="Advanced Settings")
-
-        if settings.show_advanced:
-            box_advanced.prop(settings, "image_format")
-            box_advanced.prop(settings, "colmap_quality")
-            box_advanced.prop(settings, "delete_workspace")
-
         layout.separator()
+        wm = context.window_manager
         layout.label(text=f"Progress: {wm.oneshot_progress}")
         layout.label(text=wm.oneshot_progress_detail)
+
+class ONESHOT_PT_DirectImportPanel(Panel):
+    bl_label = "Direct Import"
+    bl_idname = "ONESHOT_PT_DirectImportPanel"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "OneShot"
+
+    def draw(self, context):
+        layout = self.layout
+        settings = context.scene.oneshot_settings
+
+        layout.label(text="Import Pre-existing COLMAP Model")
+        layout.prop(settings, "colmap_model_path")
+        layout.operator("oneshot.import_colmap_model", text="Import Model", icon='IMPORT')
+
+class ONESHOT_PT_AdvancedSettingsPanel(Panel):
+    bl_label = "Advanced Settings"
+    bl_idname = "ONESHOT_PT_AdvancedSettingsPanel"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "OneShot"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        settings = context.scene.oneshot_settings
+
+        col = layout.column()
+        
+        col.label(text="Reconstruction:")
+        col.prop(settings, "image_format")
+        col.prop(settings, "colmap_quality")
+        col.prop(settings, "delete_workspace")
+        
+        col.separator()
+        
+        col.label(text="Camera Import Options:")
+        col.prop(settings, "import_cameras")
+        col.prop(settings, "add_background_image_for_each_camera")
+        col.prop(settings, "add_camera_motion_as_animation")
+        
+        col.separator()
+
+        col.label(text="Point Cloud Options:")
+        col.prop(settings, "import_points")
+        col.prop(settings, "add_points_as_mesh_object")
