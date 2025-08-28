@@ -1,29 +1,13 @@
 ```
-         _______                   _____                    _____                    _____                    _____                   _______               _____          
-        /::\    \                 /\    \                  /\    \                  /\    \                  /\    \                 /::\    \             /\    \         
-       /::::\    \               /::\____\                /::\    \                /::\    \                /::\____\               /::::\    \           /::\    \        
-      /::::::\    \             /::::|   |               /::::\    \              /::::\    \              /:::/    /              /::::::\    \          \:::\    \       
-     /::::::::\    \           /:::::|   |              /::::::\    \            /::::::\    \            /:::/    /              /::::::::\    \          \:::\    \      
-    /:::/~~\:::\    \         /::::::|   |             /:::/\:::\    \          /:::/\:::\    \          /:::/    /              /:::/~~\:::\    \          \:::\    \     
-   /:::/    \:::\    \       /:::/|::|   |            /:::/__\:::\    \        /:::/__\:::\    \        /:::/____/              /:::/    \:::\    \          \:::\    \    
-  /:::/    / \:::\    \     /:::/ |::|   |           /::::\   \:::\    \       \:::\   \:::\    \      /::::\    \             /:::/    / \:::\    \         /::::\    \   
- /:::/____/   \:::\____\   /:::/  |::|   | _____    /::::::\   \:::\    \    ___\:::\   \:::\    \    /::::::\    \   _____   /:::/____/   \:::\____\       /::::::\    \  
-|:::|    |     |:::|    | /:::/   |::|   |/\    \  /:::/\:::\   \:::\    \  /\   \:::\   \:::\    \  /:::/\:::\    \ /\    \ |:::|    |     |:::|    |     /:::/\:::\    \ 
-|:::|____|     |:::|    |/:: /    |::|   /::\____\/:::/__\:::\   \:::\____\/::\   \:::\   \:::\____\/:::/  \:::\    /::\____\|:::|____|     |:::|    |    /:::/  \:::\____\
- \:::\    \   /:::/    / \::/    /|::|  /:::/    /\:::\   \:::\   \::/    /\:::\   \:::\   \::/    /\::/    \:::\  /:::/    / \:::\    \   /:::/    /    /:::/    \::/    /
-  \:::\    \ /:::/    /   \/____/ |::| /:::/    /  \:::\   \:::\   \/____/  \:::\   \:::\   \/____/  \/____/ \:::\/:::/    /   \:::\    \ /:::/    /    /:::/    / \/____/ 
-   \:::\    /:::/    /            |::|/:::/    /    \:::\   \:::\    \       \:::\   \:::\    \               \::::::/    /     \:::\    /:::/    /    /:::/    /          
-    \:::\__/:::/    /             |::::::/    /      \:::\   \:::\____\       \:::\   \:::\____\               \::::/    /       \:::\__/:::/    /    /:::/    /           
-     \::::::::/    /              |:::::/    /        \:::\   \::/    /        \:::\  /:::/    /               /:::/    /         \::::::::/    /     \::/    /            
-      \::::::/    /               |::::/    /          \:::\   \/____/          \:::\/:::/    /               /:::/    /           \::::::/    /       \/____/             
-       \::::/    /                /:::/    /            \:::\    \               \::::::/    /               /:::/    /             \::::/    /                            
-        \::/____/                /:::/    /              \:::\____\               \::::/    /               /:::/    /               \::/____/                             
-         ~~                      \::/    /                \::/    /                \::/    /                \::/    /                 ~~                                   
-                                  \/____/                  \/____/                  \/____/                  \/____/                                                       
+ ______     __   __     ______     ______     __  __     ______     ______  
+/\  __ \   /\ "-.\ \   /\  ___\   /\  ___\   /\ \_\ \   /\  __ \   /\__  _\ 
+\ \ \/\ \  \ \ \-.  \  \ \  __\   \ \___  \  \ \  __ \  \ \ \/\ \  \/_/\ \/ 
+ \ \_____\  \ \_\\"\_\  \ \_____\  \/\_____\  \ \_\ \_\  \ \_____\    \ \_\ 
+  \/_____/   \/_/ \/_/   \/_____/   \/_____/   \/_/\/_/   \/_____/     \/_/ 
+                                                                            ____/                                                       
 ```                                                                                                                                                                                                                                                                                                                                                      
 # One-Click Photogrammetry and Camera Tracking for Blender
 
----
 
 **oneShot** is a powerful Blender addon that dramatically simplifies the process of creating 3D scenes from video footage. It provides a complete, self-contained photogrammetry pipeline by integrating the power of **FFmpeg** and **COLMAP** directly into a user-friendly, two-step interface.
 
@@ -33,7 +17,6 @@ Whether you're a VFX artist, a 3D archivist, or just exploring photogrammetry, o
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 
----
 
 ## ✨ Features
 
@@ -44,7 +27,6 @@ Whether you're a VFX artist, a 3D archivist, or just exploring photogrammetry, o
 * **Responsive UI:** The reconstruction process runs in a background thread, so Blender remains fully responsive while you monitor the live progress.
 * **Self-Contained:** All necessary components are bundled within the addon, providing a seamless experience without needing to install multiple separate addons.
 
----
 
 ## 🎬 Demo
 
@@ -59,7 +41,6 @@ Here's a quick look at the oneShot workflow in action.
 **(GIF Placeholder: Show the 'Step 2' panel, selecting the image folder, clicking 'Generate 3D Scene', and the final imported camera/point cloud.)**
 *Fig 3: Reconstructing the 3D scene from the image sequence and importing it into Blender.*
 
----
 
 ## 🚀 Installation
 
@@ -69,7 +50,6 @@ Here's a quick look at the oneShot workflow in action.
 4.  Click `Install...` and select the downloaded `oneShot.zip` file.
 5.  Enable the "oneShot" addon by checking the box next to it.
 
----
 
 ## 🛠️ Usage & Workflow
 
@@ -103,7 +83,6 @@ This step takes a folder of images, processes them with COLMAP, and imports the 
 4.  The process will begin, and you can monitor its status live in the UI via the progress bar. This step can take a long time depending on the number of images and the selected quality. Blender will remain responsive.
 5.  Once complete, a new collection containing the animated camera and the point cloud will be added to your scene.
 
----
 
 ## ⚙️ Advanced Settings
 
@@ -113,7 +92,6 @@ For more control over the reconstruction, you can expand the "Advanced Settings"
 * **COLMAP Quality:** Adjust the detail level for feature matching. Higher settings are more accurate but significantly slower.
 * **Delete Workspace:** If checked, the temporary COLMAP processing files will be deleted after the import is complete, saving disk space.
 
----
 
 ## 🚑 Troubleshooting
 
@@ -124,7 +102,7 @@ For more control over the reconstruction, you can expand the "Advanced Settings"
     * Reflective surfaces or moving objects in the scene.
 * **Addon doesn't enable:** Ensure you are using Blender 4.0 or newer.
 
----
+
 
 ## ❤️ Credits & License
 

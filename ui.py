@@ -21,6 +21,11 @@ class PhotogrammetrySettings(PropertyGroup):
         description="Directory containing images for 3D reconstruction",
         default=os.path.join(bpy.app.tempdir, "oneshot_frames")
     ) # type: ignore
+    reconstruction_output_folder: StringProperty(
+        name="Reconstruction Output Folder",
+        subtype='DIR_PATH',
+        description="Folder to store the COLMAP reconstruction files"
+    ) # type: ignore
     show_advanced: BoolProperty(
         name="Show Advanced Settings",
         default=False
@@ -73,6 +78,7 @@ class ONESHOT_PT_main_panel(Panel):
         box2 = layout.box()
         box2.label(text="Step 2: Reconstruct Scene", icon='OUTLINER_OB_CAMERA')
         box2.prop(settings, "image_input_folder")
+        box2.prop(settings, "reconstruction_output_folder")
         box2.operator("oneshot.reconstruct_scene", text="Generate 3D Scene", icon='PLAY')
 
         # Advanced Settings (now part of Step 2)
@@ -90,3 +96,4 @@ class ONESHOT_PT_main_panel(Panel):
 
         layout.separator()
         layout.label(text=f"Progress: {wm.oneshot_progress}")
+        layout.label(text=wm.oneshot_progress_detail)
