@@ -197,8 +197,8 @@ class OneShotPreferences(bpy.types.AddonPreferences):
         layout.operator(ONESHOT_OT_install_ffmpeg.bl_idname, text="Download & Install FFmpeg", icon='IMPORT')
 
         box = layout.box()
-        box.label(text="Necessary Importer Dependencies", icon='PACKAGE')
-        box.label(text="For other formats, not required for the main COLMAP workflow.")
+        box.label(text="Importer Dependencies", icon='PACKAGE')
+        box.label(text="Required for importing the main COLMAP processed file into Blender workflow.")
         row = box.row()
         row.operator(ONESHOT_OT_install_dependencies.bl_idname, icon='CONSOLE')
         row.operator(ONESHOT_OT_uninstall_dependencies.bl_idname, icon='TRASH')

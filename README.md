@@ -1,115 +1,155 @@
 ```
- ______     __   __     ______     ______     __  __     ______     ______  
-/\  __ \   /\ "-.\ \   /\  ___\   /\  ___\   /\ \_\ \   /\  __ \   /\__  _\ 
-\ \ \/\ \  \ \ \-.  \  \ \  __\   \ \___  \  \ \  __ \  \ \ \/\ \  \/_/\ \/ 
- \ \_____\  \ \_\\"\_\  \ \_____\  \/\_____\  \ \_\ \_\  \ \_____\    \ \_\ 
-  \/_____/   \/_/ \/_/   \/_____/   \/_____/   \/_/\/_/   \/_____/     \/_/ 
-                                                                            ____/                                                       
-```                                                                                                                                                                                                                                                                                                                                                      
-# One-Click Photogrammetry and Camera Tracking for Blender
+ ________  ________   _______   ________  ___  ___  ________  _________   
+|\   __  \|\   ___  \|\  ___ \ |\   ____\|\  \|\  \|\   __  \|\___   ___\ 
+\ \  \|\  \ \  \\ \  \ \   __/|\ \  \___|\ \  \\\  \ \  \|\  \|___ \  \_| 
+ \ \  \\\  \ \  \\ \  \ \  \_|/_\ \_____  \ \   __  \ \  \\\  \   \ \  \  
+  \ \  \\\  \ \  \\ \  \ \  \_|\ \|____|\  \ \  \ \  \ \  \\\  \   \ \  \ 
+   \ \_______\ \__\\ \__\ \_______\____\_\  \ \__\ \__\ \_______\   \ \__\
+    \|_______|\|__| \|__|\|_______|\_________\|__|\|__|\|_______|    \|__|
+                                  \|_________|                            
+                                                      
+```                                                                       
+# One-Click Photogrammetry & Camera Tracking for Blender
+
+**oneShot** is a powerful Blender addon that automates the entire process of creating 3D scenes from video footage or image sequences. It provides a complete, self-contained photogrammetry pipeline by integrating the power of **FFmpeg** and **COLMAP** into a user-friendly, single-click interface.
+
+Whether you're a VFX artist creating camera tracks, a 3D archivist preserving artifacts, or an indie developer building game assets, oneShot handles the complex technical pipeline, letting you focus on the creative result.
+
+[](https://www.blender.org/)
+[](https://www.google.com/search?q=LICENSE)
+[](https://www.google.com/search?q=)
 
 
-**oneShot** is a powerful Blender addon that dramatically simplifies the process of creating 3D scenes from video footage. It provides a complete, self-contained photogrammetry pipeline by integrating the power of **FFmpeg** and **COLMAP** directly into a user-friendly, two-step interface.
+<h2 id="Table">📋 Table of Contents</h2>
 
-Whether you're a VFX artist, a 3D archivist, or just exploring photogrammetry, oneShot automates the tedious parts, letting you focus on the creative result.
-
-[![Blender Version](https://img.shields.io/badge/Blender-4.0%2B-orange.svg)](https://www.blender.org/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-
-
-## ✨ Features
-
-* **One-Click Dependencies:** Automatically downloads and installs the correct versions of COLMAP and FFmpeg for your OS. No manual setup required!
-* **Simple Two-Step Workflow:** A clean, intuitive UI guides you through the process: first extract frames, then reconstruct the scene.
-* **Bring Your Own Frames:** Already have an image sequence? Skip the video extraction and jump straight to the reconstruction step.
-* **Advanced Customization:** An optional dropdown provides control over reconstruction quality, image formats, and more for advanced users.
-* **Responsive UI:** The reconstruction process runs in a background thread, so Blender remains fully responsive while you monitor the live progress.
-* **Self-Contained:** All necessary components are bundled within the addon, providing a seamless experience without needing to install multiple separate addons.
+  - [✨ Features](#Features)
+  - [🎬 Demo](#Demo)
+  - [🚀 Installation](#Installation)
+  - [🛠️ Usage & Workflow](#Usage)
+      - [One-Time Setup: Installing Dependencies](#Dependencies)
+      - [The Main Workflow: From Video to 3D Scene](#Workflow)
+      - [Post-Processing: Optimising the Scene](#Optimising)
+  - [🎛️ UI and Button Reference](#Button)
+  - [⚙️ Advanced Settings](#Advanced)
+  - [🚑 Troubleshooting](#Troubleshooting)
+  - [❤️ Credits & License](#Credits)
 
 
-## 🎬 Demo
+<h2 id="Features">✨ Features</h2>
 
-Here's a quick look at the oneShot workflow in action.
+  * **One-Click Dependencies:** Automatically downloads and installs the correct versions of COLMAP and FFmpeg for your OS. No manual setup required\!
+  * **Unified Workflow:** A single **"Generate Scene"** button intelligently detects your input—whether it's a video file or a folder of images—and runs the entire pipeline from start to finish.
+  * **Responsive UI:** The reconstruction process runs in a background thread, so Blender remains fully responsive while you monitor live progress in the addon panel.
+  * **Scene Optimization:** A dedicated **"Optimise Scene"** button prepares your generated scene for animation by creating a 50% video proxy, re-orienting the entire reconstruction for a better starting angle, and cleaning up the outliner.
+  * **Advanced Control:** A comprehensive "Advanced Settings" panel gives power users fine-grained control over camera and point cloud import settings.
+  * **Direct COLMAP Import:** Already have a COLMAP model? A separate panel allows you to import it directly, bypassing the generation step.
+
+
+<h2 id="Demo">🎬 Demo</h2>
+
+Here's a quick look at the streamlined oneShot workflow.
 
 **(GIF Placeholder: Show the addon preferences, clicking the 'Download & Install' buttons for COLMAP and FFmpeg.)**
-*Fig 1: Automated installation of dependencies from the addon preferences.*
+*Fig 1: Automated one-time installation of dependencies from the addon preferences.*
 
-**(GIF Placeholder: Show the 'Step 1' panel, selecting a video, an output folder, and clicking 'Extract Frames'.)**
-*Fig 2: Extracting an image sequence from a video file.*
+**(GIF Placeholder: Show the 'oneShot Workflow' panel, selecting a video, an output folder, and clicking the single 'Generate Scene' button as the progress bar updates.)**
+*Fig 2: The unified workflow automatically extracts frames, runs COLMAP, and imports the result with one click.*
 
-**(GIF Placeholder: Show the 'Step 2' panel, selecting the image folder, clicking 'Generate 3D Scene', and the final imported camera/point cloud.)**
-*Fig 3: Reconstructing the 3D scene from the image sequence and importing it into Blender.*
+**(GIF Placeholder: After generation, show the 'Optimise Scene' button being clicked. The scene's camera becomes upright, and the outliner is cleaned up.)**
+*Fig 3: The one-click Optimise button prepares the scene for animation and improves viewport performance.*
 
 
-## 🚀 Installation
+<h2 id="Installation">🚀 Installation</h2>
 
-1.  Go to the [Releases](https://www.google.com/search?q=https://github.com/your-username/oneShot/releases) page.
+1.  Go to the [Releases](https://github.com/notacarrrot/oneShot/releases) page.
 2.  Download the latest `oneShot.zip` file.
 3.  In Blender, go to `Edit > Preferences > Add-ons`.
-4.  Click `Install...` and select the downloaded `oneShot.zip` file.
+4.  Click `Install > From Local` and select the downloaded `oneShot.zip` file.
 5.  Enable the "oneShot" addon by checking the box next to it.
 
 
-## 🛠️ Usage & Workflow
+<h2 id="Usage">🛠️ Usage & Workflow</h2>
 
 The entire process is managed from the **oneShot panel** in the 3D View's sidebar (press `N` to open).
 
-### Initial Setup: Installing Dependencies
+<h3 id="Dependencies">One-Time Setup: Installing Dependencies</h3>
 
-Before you begin, you must install the addon's dependencies. This is a one-time setup.
+Before you begin, you must install the addon's dependencies. This is a one-time action.
 
 1.  Go to `Edit > Preferences > Add-ons` and find the "oneShot" addon.
 2.  Expand the addon's preferences panel.
 3.  Click the **"Download & Install COLMAP"** button. Wait for the process to complete (check the system console for progress).
 4.  Click the **"Download & Install FFmpeg"** button.
-5.  Once both are installed, the paths to the executables will be filled in automatically. You are now ready to use the addon.
+5.  Click the **"Importer Dependencies"** button.
+6.  Once all are installed, the paths to the executables will be filled in automatically. You are now ready to use the addon.
 
-### Step 1: Extract Frames from Video
+<h3 id="Workflow">The Main Workflow: From Video to 3D Scene</h3>
 
-This step converts your video file into a sequence of images that COLMAP can process.
+The two-step process has been replaced by a single, intelligent pipeline.
 
-1.  In the oneShot panel, under **"Step 1: Extract Frames"**, click the folder icon next to **"Video Input"** and select your video file (`.mp4`, `.mov`, etc.).
-2.  Click the folder icon next to **"Image Output Folder"** and choose an **empty folder** where the frames will be saved.
-3.  Click the **"Extract Frames to Folder"** button. The process will run, and you can monitor its progress in Blender's system console.
+1.  **Select Input Path:** Click the folder icon and select either a **video file** (`.mp4`, `.mov`, etc.) OR a **folder containing an image sequence**. The addon will automatically detect the input type.
+2.  **Select Output Scene Folder:** Choose a root directory where your project files will be saved. oneShot will automatically create a new subfolder inside this directory named after your video file.
+3.  **Adjust Quality (Optional):** Set the **Max Image Resolution** for COLMAP to process. A lower value (e.g., 1920) is much faster than the original resolution and often yields similar quality results. Set to 0 to use the original size.
+4.  **Click Generate Scene:** The addon will now perform all necessary steps in the background:
+      * If a video is provided, it extracts the frames.
+      * It runs the full COLMAP reconstruction pipeline.
+      * It imports the final camera track and point cloud into Blender.
+      * It sets the scene's output resolution to match the original video.
+5.  You can monitor the progress live in the panel and cancel the operation at any time by clicking the **Stop** button.
 
-### Step 2: Reconstruct 3D Scene
+<h3 id="Optimising">Post-Processing: Optimising the Scene</h3>
 
-This step takes a folder of images, processes them with COLMAP, and imports the resulting 3D camera and point cloud into your scene.
+After the generation is complete, a single click can prepare the scene for animation.
 
-1.  In the oneShot panel, under **"Step 2: Reconstruct Scene"**, click the folder icon next to **"Image Input Folder"**.
-2.  Select the folder containing the image sequence you just created (or your own pre-existing sequence).
-3.  Click the **"Generate 3D Scene"** button.
-4.  The process will begin, and you can monitor its status live in the UI via the progress bar. This step can take a long time depending on the number of images and the selected quality. Blender will remain responsive.
-5.  Once complete, a new collection containing the animated camera and the point cloud will be added to your scene.
-
-
-## ⚙️ Advanced Settings
-
-For more control over the reconstruction, you can expand the "Advanced Settings" dropdown in the Step 2 panel:
-
-* **Image Format:** Choose between PNG and JPG for frame extraction. JPG is faster and uses less space, but PNG is lossless.
-* **COLMAP Quality:** Adjust the detail level for feature matching. Higher settings are more accurate but significantly slower.
-* **Delete Workspace:** If checked, the temporary COLMAP processing files will be deleted after the import is complete, saving disk space.
-
-
-## 🚑 Troubleshooting
-
-* **Installation buttons don't work:** Your computer's firewall or antivirus might be blocking the download. Check your security settings and ensure Blender has internet access.
-* **"Generate 3D Scene" fails:** Check the system console (`Window > Toggle System Console`) for detailed error messages from COLMAP. Common issues include:
-    * Blurry or low-quality video footage.
-    * Not enough parallax or movement in the video.
-    * Reflective surfaces or moving objects in the scene.
-* **Addon doesn't enable:** Ensure you are using Blender 4.0 or newer.
+1.  Click the **"Optimise Scene"** button.
+2.  The operator will perform several actions:
+      * **Generate Proxy:** It creates a 50% resolution proxy of the original video for smooth viewport playback.
+      * **Update Camera:** It links the animated camera's background to this new proxy file.
+      * **Re-orient Scene:** It precisely rotates the entire reconstruction so that the first camera (`frame_000000_cam`) is upright and level, giving you a convenient starting point.
+      * **Clean Up:** It hides the collection of individual cameras and organizes the final objects for a clean outliner.
 
 
+<h2 id="Button">🎛️ UI and Button Reference</h2>
 
-## ❤️ Credits & License
+| Panel | Button / Setting | Description |
+| :--- | :--- | :--- |
+| **Add-on Preferences** | `Download & Install COLMAP` | Downloads and configures the COLMAP executable in a `deps` folder inside the addon. |
+| | `Download & Install FFmpeg` | Downloads and configures the FFmpeg executable. |
+| **oneShot Workflow** | `Input Path` | File browser to select your source video file or image sequence folder. |
+| | `Output Scene Folder` | File browser to select the root directory for your project files. |
+| | `Max Image Resolution` | Sets the maximum size for images fed to COLMAP. `0` uses original size. Lower values (like 1920) dramatically speed up processing. |
+| | `Generate Scene` | Starts the entire automated pipeline: frame extraction (if needed), COLMAP processing, and import into Blender. |
+| | `Stop` | Immediately terminates the ongoing FFmpeg or COLMAP process. |
+| | `Optimise Scene` | A post-processing tool that generates a video proxy, re-orients the scene, and cleans up the outliner for animation. |
+| **Direct Import** | `COLMAP Model Path` | For users who already have a processed COLMAP model folder. |
+| | `Import Model` | Imports the specified COLMAP model using the settings in the "Advanced Settings" panel. |
+
+
+<h2 id="Advanced">⚙️ Advanced Settings</h2>
+
+For power users, the "Advanced Settings" panel (collapsed by default) provides fine-grained control over how the final data is imported into Blender. These settings are inherited from the powerful Photogrammetry Importer addon and are applied during the final import stage of the "Generate Scene" process or when using "Direct Import".
+
+  * **Import Cameras:** Control camera visibility, background images, image planes, and depth maps.
+  * **Add Camera Motion as Animation:** Control settings for the final animated camera, including interpolation, frame adjustments, and background video.
+  * **Import Points:** Control how the point cloud is generated, including sparsity, whether it's drawn via GPU or as a mesh object, and initial point size.
+
+
+<h2 id="Troubleshooting">🚑 Troubleshooting</h2>
+
+  * **Installation buttons don't work:** Your computer's firewall or antivirus might be blocking the download. Check your security settings and ensure Blender has internet access.
+  * **"Generate 3D Scene" fails:** Check the system console (`Window > Toggle System Console`) for detailed error messages from COLMAP. Common issues include:
+      * Blurry or low-quality video footage.
+      * Not enough parallax (side-to-side movement) in the video.
+      * Reflective surfaces or moving objects in the scene.
+  * **"Optimise Scene" button is greyed out or fails:** This button relies on objects with specific names created by the generation process (e.g., "Animated Camera", "Reconstruction Collection"). If you have renamed these objects or the generation failed, the button will not work.
+
+
+<h2 id="Credits">❤️ Credits & License</h2>
 
 This addon stands on the shoulders of giants.
 
-* **COLMAP:** The core reconstruction engine. [Project Website](https://colmap.github.io/)
-* **FFmpeg:** The tool used for robust video frame extraction. [Project Website](https://ffmpeg.org/)
-* **Photogrammetry Importer:** The original addon by SBCV, whose powerful import logic is bundled into oneShot. [GitHub Repository](https://github.com/SBCV/Blender-Addon-Photogrammetry-Importer)
+  * **COLMAP:** The core reconstruction engine. [Project Website](https://colmap.github.io/)
+  * **FFmpeg:** The tool used for robust video frame extraction. [Project Website](https://ffmpeg.org/)
+  * **Photogrammetry Importer:** The original addon by SBCV, whose powerful import logic is bundled into oneShot. [GitHub Repository](https://github.com/SBCV/Blender-Addon-Photogrammetry-Importer)
 
-This project is licensed under the MIT License. See the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
+This project is licensed under the MIT License. See the `LICENSE` file for details.
