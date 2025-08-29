@@ -25,8 +25,10 @@ def run_photogrammetry_process(context, settings, is_video: bool):
     if is_video:
         try:
             ffmpeg_path = context.preferences.addons[__package__].preferences.ffmpeg_executable_path
+            # Derive ffprobe_path from ffmpeg_path
+            ffprobe_path = str(Path(ffmpeg_path).parent / "ffprobe.exe")
             ffprobe_command = [
-                ffmpeg_path,
+                ffprobe_path, # Use the correct ffprobe_path here
                 "-v", "error",
                 "-select_streams", "v:0",
                 "-show_entries", "stream=width,height",
@@ -481,4 +483,4 @@ class ONESHOT_OT_optimise_scene(bpy.types.Operator):
             print("oneShot: Warning: 'Reconstruction Collection' or 'frame_000000_cam' not found. Skipping precise re-orientation.")
         print("oneShot: Precise re-orientation finished.")
 
-        return {'FINISHED'}
+        return {'FINISHED'} # type: ignore
