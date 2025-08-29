@@ -32,6 +32,7 @@ classes = (
     operator.ONESHOT_OT_reconstruct_monitor,
     operator.ONESHOT_OT_import_colmap_model,
     operator.ONESHOT_OT_stop_process,
+    operator.ONESHOT_OT_optimise_scene, # New operator
 )
 
 def register():

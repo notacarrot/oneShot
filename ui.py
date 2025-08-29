@@ -25,6 +25,13 @@ class PhotogrammetrySettings(PropertyGroup):
         description="Path to the directory containing the images"
     )
 
+    colmap_max_image_size: IntProperty(
+        name='Processing Resolution',
+        default=1920,
+        min=0,
+        description="Maximum image resolution for COLMAP processing. A value of 0 uses the original size."
+    )
+
     # Advanced Settings
     use_workspace_images: BoolProperty(name="Use Workspace Images", default=True)
     import_cameras: BoolProperty(name="Import Cameras", default=True)
@@ -62,10 +69,12 @@ class ONESHOT_PT_WorkflowPanel(Panel):
 
         layout.prop(settings, "input_path")
         layout.prop(settings, "output_path")
+        layout.prop(settings, "colmap_max_image_size")
 
         column = layout.column(align=True)
         column.operator("oneshot.reconstruct_scene", text="Generate Scene", icon='PLAY')
         column.operator("oneshot.stop_process", text="Stop", icon='PAUSE')
+        column.operator("oneshot.optimise_scene", text="Optimise Scene", icon='SCENE_DATA') # New button
 
         layout.separator()
         wm = context.window_manager

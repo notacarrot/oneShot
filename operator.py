@@ -7,14 +7,39 @@ import shutil
 from pathlib import Path
 from .importer import import_colmap_scene
 import datetime
+import mathutils
+import math
 
 _background_thread = None
 _current_process = None
 _process_terminated_by_user = False
+_video_resolution = None # Global variable to store video resolution
 
 def run_photogrammetry_process(context, settings, is_video: bool):
     global _current_process, _process_terminated_by_user
     _process_terminated_by_user = False # Reset flag for each new run
+
+    # Get video resolution using ffprobe
+    global _video_resolution
+    _video_resolution = None # Reset for each new run
+    if is_video:
+        try:
+            ffmpeg_path = context.preferences.addons[__package__].preferences.ffmpeg_executable_path
+            ffprobe_command = [
+                ffmpeg_path,
+                "-v", "error",
+                "-select_streams", "v:0",
+                "-show_entries", "stream=width,height",
+                "-of", "csv=s=x:p=0",
+                settings.input_path
+            ]
+            ffprobe_output = subprocess.check_output(ffprobe_command, universal_newlines=True).strip()
+            width, height = map(int, ffprobe_output.split('x'))
+            _video_resolution = (width, height)
+            print(f"oneShot: Detected video resolution: {width}x{height}")
+        except Exception as e:
+            print(f"oneShot: Error getting video resolution with ffprobe: {e}")
+            _video_resolution = None # Reset in case of error
 
     try:
         print("oneShot: Starting photogrammetry process...")
@@ -80,13 +105,16 @@ def run_photogrammetry_process(context, settings, is_video: bool):
                     shutil.copy2(s, d)
             print("oneShot: Image copy complete.")
 
+        print("oneShot: Starting COLMAP Feature Extraction process...") # NEW LINE
         context.window_manager.oneshot_progress = "Step 2/4: Running COLMAP Feature Extraction..."
         colmap_exe_path = context.preferences.addons[__package__].preferences.colmap_executable_path
         database_path = output_path / "database.db"
         
         # Feature Extractor
         cmd = [colmap_exe_path, "feature_extractor", "--database_path", str(database_path), "--image_path", str(images_path), "--ImageReader.single_camera", "1", "--SiftExtraction.use_gpu", "1"]
-        print(f"oneShot: Running COLMAP command: {' '.join(cmd)}")
+        if settings.colmap_max_image_size > 0:
+            cmd.extend(['--ImageReader.max_image_size', str(settings.colmap_max_image_size)])
+        print(f"oneShot: Running COLMAP feature_extractor command: {' '.join(cmd)}") # More specific
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
         _current_process = process # Assign to global
         while True:
@@ -95,19 +123,22 @@ def run_photogrammetry_process(context, settings, is_video: bool):
                 break
             if output:
                 context.window_manager.oneshot_progress_detail = output.strip()
+        print("oneShot: COLMAP feature_extractor process finished.") # NEW
         if process.poll() != 0:
             if _process_terminated_by_user:
                 context.window_manager.oneshot_progress = "Process stopped by user."
                 print("oneShot: COLMAP feature_extractor stopped by user.")
             else:
                 context.window_manager.oneshot_progress = "Error: COLMAP feature_extractor failed."
-                print("oneShot: COLMAP feature_extractor failed.")
+                print("oneShot: COLMAP feature_extractor failed. Check console for details.") # More specific
             return
+        print("oneShot: COLMAP feature_extractor completed successfully.") # NEW
 
+        print("oneShot: Starting COLMAP Sequential Matcher process...") # NEW LINE
         context.window_manager.oneshot_progress = "Step 3/4: Running COLMAP Sequential Matcher..."
         # Sequential Matcher
         cmd = [colmap_exe_path, "sequential_matcher", "--database_path", str(database_path)]
-        print(f"oneShot: Running COLMAP command: {' '.join(cmd)}")
+        print(f"oneShot: Running COLMAP sequential_matcher command: {' '.join(cmd)}") # More specific
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
         _current_process = process # Assign to global
         while True:
@@ -116,19 +147,22 @@ def run_photogrammetry_process(context, settings, is_video: bool):
                 break
             if output:
                 context.window_manager.oneshot_progress_detail = output.strip()
+        print("oneShot: COLMAP sequential_matcher process finished.") # NEW
         if process.poll() != 0:
             if _process_terminated_by_user:
                 context.window_manager.oneshot_progress = "Process stopped by user."
                 print("oneShot: COLMAP sequential_matcher stopped by user.")
             else:
                 context.window_manager.oneshot_progress = "Error: COLMAP sequential_matcher failed."
-                print("oneShot: COLMAP sequential_matcher failed.")
+                print("oneShot: COLMAP sequential_matcher failed. Check console for details.") # More specific
             return
+        print("oneShot: COLMAP sequential_matcher completed successfully.") # NEW
 
+        print("oneShot: Starting COLMAP Mapper process...") # NEW LINE
         context.window_manager.oneshot_progress = "Step 4/4: Running COLMAP Mapper..."
         # Mapper
         cmd = [colmap_exe_path, "mapper", "--database_path", str(database_path), "--image_path", str(images_path), "--output_path", str(sparse_path)]
-        print(f"oneShot: Running COLMAP command: {' '.join(cmd)}")
+        print(f"oneShot: Running COLMAP mapper command: {' '.join(cmd)}") # More specific
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
         _current_process = process # Assign to global
         while True:
@@ -137,22 +171,25 @@ def run_photogrammetry_process(context, settings, is_video: bool):
                 break
             if output:
                 context.window_manager.oneshot_progress_detail = output.strip()
+        print("oneShot: COLMAP mapper process finished.") # NEW
         if process.poll() != 0:
             if _process_terminated_by_user:
                 context.window_manager.oneshot_progress = "Process stopped by user."
                 print("oneShot: COLMAP mapper stopped by user.")
             else:
                 context.window_manager.oneshot_progress = "Error: COLMAP mapper failed."
-                print("oneShot: COLMAP mapper failed.")
+                print("oneShot: COLMAP mapper failed. Check console for details.") # More specific
             return
+        print("oneShot: COLMAP mapper completed successfully.") # NEW
 
+        print("oneShot: Starting COLMAP Model Converter process...") # NEW LINE
         # Model Converter
         context.window_manager.oneshot_progress = "Converting model..."
         print("oneShot: Converting model to TXT...")
         model_path_in = sparse_path / "0"
         if model_path_in.exists():
             cmd = [colmap_exe_path, "model_converter", "--input_path", str(model_path_in), "--output_path", str(sparse_path), "--output_type", "TXT"]
-            print(f"oneShot: Running COLMAP command: {' '.join(cmd)}")
+            print(f"oneShot: Running COLMAP model_converter command: {' '.join(cmd)}") # More specific
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
             _current_process = process # Assign to global
             while True:
@@ -161,14 +198,16 @@ def run_photogrammetry_process(context, settings, is_video: bool):
                     break
                 if output:
                     context.window_manager.oneshot_progress_detail = output.strip()
+            print("oneShot: COLMAP model_converter process finished.") # NEW
             if process.poll() != 0:
                 if _process_terminated_by_user:
                     context.window_manager.oneshot_progress = "Process stopped by user."
                     print("oneShot: COLMAP model_converter stopped by user.")
                 else:
                     context.window_manager.oneshot_progress = "Error: COLMAP model_converter failed."
-                    print("oneShot: COLMAP model_converter failed.")
+                    print("oneShot: COLMAP model_converter failed. Check console for details.") # More specific
                 return
+            print("oneShot: COLMAP model_converter completed successfully.") # NEW
         else:
             print("oneShot: No sparse model to convert.")
 
@@ -239,6 +278,15 @@ class ONESHOT_OT_reconstruct_monitor(bpy.types.Operator):
                 context.window_manager.event_timer_remove(self._timer)
                 global _background_thread
                 _background_thread = None
+
+                # Apply video resolution if available
+                global _video_resolution
+                if _video_resolution:
+                    bpy.context.scene.render.resolution_x = _video_resolution[0]
+                    bpy.context.scene.render.resolution_y = _video_resolution[1]
+                    print(f"oneShot: Applied render resolution: {_video_resolution[0]}x{_video_resolution[1]}")
+                    _video_resolution = None # Clear after use
+
                 return {'FINISHED'}
             else:
                 context.area.tag_redraw()
@@ -282,5 +330,156 @@ class ONESHOT_OT_stop_process(bpy.types.Operator):
             _current_process.terminate() # Request graceful termination
             self.report({'INFO'}, "Photogrammetry process termination requested.")
         else:
-            self.report({'INFO'}, "No photogrammetry process is currently running.")
+            self.report({'INFO'}, "No photogrammetry process is currently currently running.")
+        return {'FINISHED'}
+
+
+class ONESHOT_OT_optimise_scene(bpy.types.Operator):
+    bl_idname = "oneshot.optimise_scene"
+    bl_label = "Optimise Scene"
+    bl_description = "Optimises the imported scene for better viewing"
+
+    def execute(self, context):
+        # 0. Video Proxy Generation
+        print("oneShot: Starting video proxy generation...")
+        if "Animated Camera" in bpy.data.objects:
+            animated_camera = bpy.data.objects["Animated Camera"]
+            if animated_camera.data and animated_camera.data.background_images:
+                for bg_img in animated_camera.data.background_images:
+                    if bg_img.source == 'MOVIE' and bg_img.clip:
+                        original_video_path = bpy.path.abspath(bg_img.clip.filepath)
+                        print(f"oneShot: Original video path: {original_video_path}")
+                        if os.path.exists(original_video_path):
+                            video_dir = Path(original_video_path).parent
+                            proxy_dir = video_dir / "proxy"
+                            proxy_dir.mkdir(parents=True, exist_ok=True)
+                            print(f"oneShot: Proxy directory created: {proxy_dir}")
+                            
+                            video_name = Path(original_video_path).stem
+                            proxy_video_path = proxy_dir / f"{video_name}_proxy.mp4"
+                            print(f"oneShot: Proxy video output path: {proxy_video_path}")
+
+                            ffmpeg_path = context.preferences.addons[__package__].preferences.ffmpeg_executable_path
+                            print(f"oneShot: FFmpeg executable path: {ffmpeg_path}")
+                            
+                            command = [
+                                ffmpeg_path,
+                                "-i", original_video_path,
+                                "-vf", "scale=iw/2:ih/2",
+                                "-c:v", "libx264",
+                                "-crf", "23",
+                                "-preset", "medium",
+                                "-y", # Overwrite output file without asking
+                                str(proxy_video_path)
+                            ]
+                            print(f"oneShot: Running FFmpeg proxy command: {' '.join(command)}")
+                            try:
+                                subprocess.run(command, check=True, capture_output=True, text=True)
+                                print(f"oneShot: Video proxy generated successfully: {proxy_video_path}")
+                                bg_img.clip.filepath = str(proxy_video_path)
+                                print(f"oneShot: Updated Animated Camera movie clip filepath to: {bg_img.clip.filepath}")
+                                self.report({'INFO'}, f"Generated and applied video proxy: {proxy_video_path}")
+                            except subprocess.CalledProcessError as e:
+                                self.report({'ERROR'}, f"FFmpeg proxy generation failed: {e.stderr}")
+                                print(f"oneShot: FFmpeg proxy generation failed. Stderr: {e.stderr}")
+                                print(f"oneShot: FFmpeg proxy generation failed. Stdout: {e.stdout}")
+                            except Exception as e:
+                                self.report({'ERROR'}, f"Error during proxy generation: {e}")
+                                print(f"oneShot: Error during proxy generation: {e}")
+                        else:
+                            self.report({'WARNING'}, f"Original video not found: {original_video_path}")
+                            print(f"oneShot: Warning: Original video not found at {original_video_path}. Skipping proxy generation.")
+            else:
+                self.report({'WARNING'}, "'Animated Camera' has no background movie clip.")
+                print("oneShot: Warning: 'Animated Camera' has no background movie clip. Skipping proxy generation.")
+        else:
+            self.report({'WARNING'}, "'Animated Camera' object not found for proxy generation.")
+            print("oneShot: Warning: 'Animated Camera' object not found. Skipping proxy generation.")
+        print("oneShot: Video proxy generation finished.")
+
+        # 1. Find the "Cameras" collection and hide it from the viewport.
+        print("oneShot: Hiding 'Cameras' collection...")
+        if "Cameras" in bpy.data.collections:
+            cameras_collection = bpy.data.collections["Cameras"]
+            cameras_collection.hide_viewport = True
+            self.report({'INFO'}, "Hid 'Cameras' collection.")
+            print("oneShot: 'Cameras' collection hidden.")
+        else:
+            self.report({'WARNING'}, "'Cameras' collection not found.")
+            print("oneShot: Warning: 'Cameras' collection not found.")
+
+        # 2. Find the "Animated Camera" object and set it as the active scene camera.
+        print("oneShot: Setting 'Animated Camera' as active scene camera...")
+        if "Animated Camera" in bpy.data.objects:
+            animated_camera = bpy.data.objects["Animated Camera"]
+            context.scene.camera = animated_camera
+            self.report({'INFO'}, "Set 'Animated Camera' as active scene camera.")
+            print("oneShot: 'Animated Camera' set as active scene camera.")
+        else:
+            self.report({'WARNING'}, "'Animated Camera' object not found.")
+            print("oneShot: Warning: 'Animated Camera' object not found. Cannot set as active camera.")
+
+        # 3. Precise Re-orientation of "Reconstruction Collection"
+        print("oneShot: Starting precise re-orientation...")
+        if "Reconstruction Collection" in bpy.data.collections and "frame_000000_cam" in bpy.data.objects:
+            reconstruction_collection = bpy.data.collections["Reconstruction Collection"]
+            frame_000000_cam = bpy.data.objects["frame_000000_cam"]
+            print(f"oneShot: Found 'Reconstruction Collection' and 'frame_000000_cam'.")
+
+            # Set 3D cursor to world origin
+            context.scene.cursor.location = (0, 0, 0)
+            print("oneShot: 3D cursor set to world origin (0,0,0).")
+
+            # Get current world rotation of frame_000000_cam
+            current_rot_euler = frame_000000_cam.matrix_world.to_euler('XYZ')
+            print(f"oneShot: Current 'frame_000000_cam' rotation (Euler XYZ): {current_rot_euler}")
+
+            # Target rotation: (90, 0, Z)
+            target_rot_euler = mathutils.Euler((math.radians(90), 0, current_rot_euler.z), 'XYZ')
+            print(f"oneShot: Target rotation (Euler XYZ): {target_rot_euler} (Z preserved from current)")
+
+            # Calculate corrective rotation matrix
+            corrective_matrix = target_rot_euler.to_matrix().to_4x4() @ current_rot_euler.to_matrix().inverted().to_4x4()
+            print(f"oneShot: Corrective rotation matrix calculated.")
+
+            # Create an empty object to act as the parent for the collection if it doesn't have one
+            collection_parent_name = "Reconstruction_Collection_Parent"
+            collection_parent = None
+            if collection_parent_name not in bpy.data.objects:
+                bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0, 0, 0))
+                collection_parent = context.active_object
+                collection_parent.name = collection_parent_name
+                print(f"oneShot: Created new parent empty: {collection_parent_name}")
+            else:
+                collection_parent = bpy.data.objects[collection_parent_name]
+                print(f"oneShot: Found existing parent empty: {collection_parent_name}")
+
+            # Parent all objects in the "Reconstruction Collection" to this empty
+            objects_to_parent = [obj for obj in reconstruction_collection.objects if obj.parent is None]
+            print(f"oneShot: Found {len(objects_to_parent)} objects in 'Reconstruction Collection' to parent.")
+
+            for obj in objects_to_parent:
+                if reconstruction_collection.name in obj.users_collection:
+                    obj.users_collection.remove(reconstruction_collection)
+                    print(f"oneShot: Unlinked {obj.name} from 'Reconstruction Collection'.")
+                if bpy.context.scene.collection.name not in obj.users_collection:
+                    bpy.context.scene.collection.objects.link(obj)
+                    print(f"oneShot: Linked {obj.name} to scene collection.")
+            
+            for obj in objects_to_parent:
+                obj.parent = collection_parent
+                obj.matrix_parent_inverse = collection_parent.matrix_world.inverted()
+                print(f"oneShot: Parented {obj.name} to {collection_parent.name}.")
+            print("oneShot: All relevant objects in 'Reconstruction Collection' parented to empty.")
+
+            # Apply the corrective rotation to the parent empty
+            collection_parent.matrix_world = corrective_matrix @ collection_parent.matrix_world
+            print(f"oneShot: Applied corrective rotation to parent empty '{collection_parent.name}'.")
+            
+            self.report({'INFO'}, "Re-oriented 'Reconstruction Collection' precisely.")
+        else:
+            self.report({'WARNING'}, "'Reconstruction Collection' or 'frame_000000_cam' not found. Skipping precise re-orientation.")
+            print("oneShot: Warning: 'Reconstruction Collection' or 'frame_000000_cam' not found. Skipping precise re-orientation.")
+        print("oneShot: Precise re-orientation finished.")
+
         return {'FINISHED'}
