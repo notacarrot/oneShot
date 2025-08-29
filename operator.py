@@ -112,8 +112,7 @@ def run_photogrammetry_process(context, settings, is_video: bool):
         
         # Feature Extractor
         cmd = [colmap_exe_path, "feature_extractor", "--database_path", str(database_path), "--image_path", str(images_path), "--ImageReader.single_camera", "1", "--SiftExtraction.use_gpu", "1"]
-        if settings.colmap_max_image_size > 0:
-            cmd.extend(['--ImageReader.max_image_size', str(settings.colmap_max_image_size)])
+        
         print(f"oneShot: Running COLMAP feature_extractor command: {' '.join(cmd)}") # More specific
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
         _current_process = process # Assign to global

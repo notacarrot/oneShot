@@ -117,7 +117,7 @@ After the generation is complete, a single click can prepare the scene for anima
 | | `Download & Install FFmpeg` | Downloads and configures the FFmpeg executable. |
 | **oneShot Workflow** | `Input Path` | File browser to select your source video file or image sequence folder. |
 | | `Output Scene Folder` | File browser to select the root directory for your project files. |
-| | `Max Image Resolution` | Sets the maximum size for images fed to COLMAP. `0` uses original size. Lower values (like 1920) dramatically speed up processing. |
+
 | | `Generate Scene` | Starts the entire automated pipeline: frame extraction (if needed), COLMAP processing, and import into Blender. |
 | | `Stop` | Immediately terminates the ongoing FFmpeg or COLMAP process. |
 | | `Optimise Scene` | A post-processing tool that generates a video proxy, re-orients the scene, and cleans up the outliner for animation. |
