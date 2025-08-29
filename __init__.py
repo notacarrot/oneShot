@@ -4,12 +4,12 @@ from .importer.utility import developer_utility
 bl_info = {
     "name": "oneShot",
     "author": "notacarrrot",
-    "version": (0, 1, 5),
+    "version": (1, 0, 1),
     "blender": (4, 0, 0),
     "category": "Import-Export",
-    "description": "A modular Blender addon for photogrammetry workflows.",
-    "doc_url": "",
-    "tracker_url": "",
+    "description": "A powerful Blender addon that automates the entire process of creating 3D scenes from video footage or image sequences.",
+    "doc_url": "https://github.com/notacarrrot/oneShot",
+    "tracker_url": "https://github.com/notacarrrot/oneShot/issues",
 }
 
 import bpy
