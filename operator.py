@@ -14,6 +14,7 @@ _background_thread = None
 _current_process = None
 _process_terminated_by_user = False
 _video_resolution = None # Global variable to store video resolution
+_last_successful_path = None # Global variable to store the path of the last successful reconstruction
 
 def run_photogrammetry_process(context, settings, is_video: bool):
     global _current_process, _process_terminated_by_user
@@ -113,7 +114,7 @@ def run_photogrammetry_process(context, settings, is_video: bool):
         database_path = output_path / "database.db"
         
         # Feature Extractor
-        cmd = [colmap_exe_path, "feature_extractor", "--database_path", str(database_path), "--image_path", str(images_path), "--ImageReader.single_camera", "1", "--SiftExtraction.use_gpu", "1"]
+        cmd = [colmap_exe_path, "feature_extractor", "--database_path", str(database_path), "--image_path", str(images_path), "--ImageReader.single_camera", "1", "--SiftExtraction.use_gpu", "1", "--ImageReader.camera_model", "PINHOLE"]
         
         print(f"oneShot: Running COLMAP feature_extractor command: {' '.join(cmd)}") # More specific
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
@@ -138,7 +139,7 @@ def run_photogrammetry_process(context, settings, is_video: bool):
         print("oneShot: Starting COLMAP Sequential Matcher process...") # NEW LINE
         context.window_manager.oneshot_progress = "Step 3/4: Running COLMAP Sequential Matcher..."
         # Sequential Matcher
-        cmd = [colmap_exe_path, "sequential_matcher", "--database_path", str(database_path)]
+        cmd = [colmap_exe_path, "sequential_matcher", "--database_path", str(database_path), "--SiftMatching.use_gpu", "1", "--SequentialMatching.overlap", "15"]
         print(f"oneShot: Running COLMAP sequential_matcher command: {' '.join(cmd)}") # More specific
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
         _current_process = process # Assign to global
@@ -162,7 +163,13 @@ def run_photogrammetry_process(context, settings, is_video: bool):
         print("oneShot: Starting COLMAP Mapper process...") # NEW LINE
         context.window_manager.oneshot_progress = "Step 4/4: Running COLMAP Mapper..."
         # Mapper
-        cmd = [colmap_exe_path, "mapper", "--database_path", str(database_path), "--image_path", str(images_path), "--output_path", str(sparse_path)]
+        core_count = os.cpu_count()
+        cmd = [colmap_exe_path, "mapper", "--database_path", str(database_path), "--image_path", str(images_path), "--output_path", str(sparse_path), "--Mapper.ba_use_gpu", "1"]
+        if core_count:
+            cmd.extend(["--Mapper.num_threads", str(core_count)])
+        
+        if settings.init_image_id1 > 0 and settings.init_image_id2 > 0:
+            cmd.extend(["--Mapper.init_image_id1", str(settings.init_image_id1), "--Mapper.init_image_id2", str(settings.init_image_id2)])
         print(f"oneShot: Running COLMAP mapper command: {' '.join(cmd)}") # More specific
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
         _current_process = process # Assign to global
@@ -209,20 +216,14 @@ def run_photogrammetry_process(context, settings, is_video: bool):
                     print("oneShot: COLMAP model_converter failed. Check console for details.") # More specific
                 return
             print("oneShot: COLMAP model_converter completed successfully.") # NEW
+            context.window_manager.oneshot_progress = "Finalizing..."
+            time.sleep(3)
         else:
             print("oneShot: No sparse model to convert.")
 
-        context.window_manager.oneshot_progress = "Importing Scene..."
-        reconstruction_path = sparse_path / "0"
-        if not reconstruction_path.exists():
-            context.window_manager.oneshot_progress = "Error: Reconstruction failed, model not found."
-            return
-
-        if not import_colmap_scene(reconstruction_folder_path=str(reconstruction_path), settings=settings):
-            context.window_manager.oneshot_progress = "Error: Scene import failed."
-            return
-        
-        context.window_manager.oneshot_progress = "Success! Scene Imported."
+        global _last_successful_path
+        _last_successful_path = output_path
+        context.window_manager.oneshot_progress = "Success! Scene ready for import."
 
     except Exception as e:
         context.window_manager.oneshot_progress = f"Error: {e}"
@@ -288,6 +289,13 @@ class ONESHOT_OT_reconstruct_monitor(bpy.types.Operator):
                     print(f"oneShot: Applied render resolution: {_video_resolution[0]}x{_video_resolution[1]}")
                     _video_resolution = None # Clear after use
 
+                global _last_successful_path
+                if _last_successful_path:
+                    context.window_manager.oneshot_progress = "Importing Scene..."
+                    context.scene.oneshot_settings.colmap_model_path = str(_last_successful_path)
+                    bpy.ops.oneshot.import_colmap_model()
+                    _last_successful_path = None # Clear the path after use
+                
                 return {'FINISHED'}
             else:
                 context.area.tag_redraw()

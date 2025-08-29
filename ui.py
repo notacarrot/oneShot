@@ -50,6 +50,18 @@ class PhotogrammetrySettings(PropertyGroup):
     add_points_as_mesh_object: BoolProperty(name="Add Points as Mesh Object", default=False)
     import_mesh: BoolProperty(name="Import Mesh", default=False)
     adjust_clipping_distance: BoolProperty(name="Adjust Clipping Distance", default=False)
+    init_image_id1: IntProperty(
+        name="Initial Image ID 1",
+        default=0,
+        min=0,
+        description="First image ID for mapper initialization. Set to 0 for automatic selection."
+    )
+    init_image_id2: IntProperty(
+        name="Initial Image ID 2",
+        default=0,
+        min=0,
+        description="Second image ID for mapper initialization. Set to 0 for automatic selection."
+    )
 
 class ONESHOT_PT_WorkflowPanel(Panel):
     bl_label = "oneShot Workflow"
@@ -133,3 +145,8 @@ class ONESHOT_PT_AdvancedSettingsPanel(Panel):
 
         layout.prop(settings, "import_mesh")
         layout.prop(settings, "adjust_clipping_distance")
+
+        box_mapper_init = layout.box()
+        box_mapper_init.label(text="Mapper Initialization (Advanced)")
+        box_mapper_init.prop(settings, "init_image_id1")
+        box_mapper_init.prop(settings, "init_image_id2")

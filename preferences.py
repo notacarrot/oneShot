@@ -52,28 +52,28 @@ def run_pip(args):
 
 class ONESHOT_OT_install_dependencies(bpy.types.Operator):
     bl_idname = "oneshot.install_dependencies"
-    bl_label = "Install Optional Dependencies"
+    bl_label = "Install Importer Dependencies"
     bl_description = "Install optional Python packages for extended file format support."
 
     def execute(self, context):
-        self.report({'INFO'}, "Installing optional dependencies... Check console for progress.")
+        self.report({'INFO'}, "Installing Importer Dependencies... Check console for progress.")
         return_code = run_pip(["install"] + optional_dependencies)
         if return_code == 0:
-            self.report({'INFO'}, "Optional dependencies installed successfully.")
+            self.report({'INFO'}, "Importer Dependencies installed successfully.")
         else:
             self.report({'ERROR'}, "Failed to install one or more dependencies.")
         return {'FINISHED'}
 
 class ONESHOT_OT_uninstall_dependencies(bpy.types.Operator):
     bl_idname = "oneshot.uninstall_dependencies"
-    bl_label = "Uninstall Optional Dependencies"
-    bl_description = "Uninstall optional Python packages."
+    bl_label = "Uninstall Importer Dependencies"
+    bl_description = "Uninstall importer Python packages."
 
     def execute(self, context):
-        self.report({'INFO'}, "Uninstalling optional dependencies... Check console for progress.")
+        self.report({'INFO'}, "Uninstalling Importer Dependencies... Check console for progress.")
         return_code = run_pip(["uninstall", "-y"] + optional_dependencies)
         if return_code == 0:
-            self.report({'INFO'}, "Optional dependencies uninstalled successfully.")
+            self.report({'INFO'}, "Importer Dependencies uninstalled successfully.")
         else:
             self.report({'ERROR'}, "Failed to uninstall one or more dependencies.")
         return {'FINISHED'}
