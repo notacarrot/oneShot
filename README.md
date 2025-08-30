@@ -48,6 +48,8 @@ Whether you're a VFX artist creating camera tracks, a 3D archivist preserving ar
 
 <h2 id="Installation">🚀 Installation</h2>
 
+![oneShot install Demo](https://github.com/notacarrrot/oneShot/blob/main/video-OUT/installation-demo.gif)
+
 1.  Go to the [Releases](https://github.com/notacarrrot/oneShot/releases) page.
 2.  Download the latest `oneShot.zip` file.
 3.  In Blender, go to `Edit > Preferences > Add-ons`.
@@ -62,8 +64,6 @@ The entire process is managed from the **oneShot panel** in the 3D View's sideba
 <h3 id="Dependencies">One-Time Setup: Installing Dependencies</h3>
 
 Before you begin, you must install the addon's dependencies. This is a one-time action.
-
-![oneShot install Demo](https://github.com/notacarrrot/oneShot/blob/main/video-OUT/installation-demo.gif)
 
 1.  Go to `Edit > Preferences > Add-ons` and find the "oneShot" addon.
 2.  Expand the addon's preferences panel.
