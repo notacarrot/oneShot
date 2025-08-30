@@ -13,7 +13,7 @@
 
 **oneShot** is a powerful Blender addon that automates the entire process of creating 3D scenes from video footage or image sequences. It provides a complete, self-contained photogrammetry pipeline by integrating the power of **FFmpeg** and **COLMAP** into a user-friendly, single-click interface.
 
-![oneShot Demo](https://github.com/notacarrrot/oneShot/tree/main/video-OUT/addon-demo.gif)
+![oneShot Demo](https://github.com/notacarrrot/oneShot/blob/main/video-OUT/addon-demo.gif)
 
 Whether you're a VFX artist creating camera tracks, a 3D archivist preserving artifacts, or an indie developer building game assets, oneShot handles the complex technical pipeline, letting you focus on the creative result.
 
@@ -63,7 +63,7 @@ The entire process is managed from the **oneShot panel** in the 3D View's sideba
 
 Before you begin, you must install the addon's dependencies. This is a one-time action.
 
-![oneShot install Demo](https://github.com/notacarrrot/oneShot/tree/main/video-OUT/installation-demo.gif)
+![oneShot install Demo](https://github.com/notacarrrot/oneShot/blob/main/video-OUT/installation-demo.gif)
 
 1.  Go to `Edit > Preferences > Add-ons` and find the "oneShot" addon.
 2.  Expand the addon's preferences panel.
