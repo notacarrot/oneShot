@@ -19,7 +19,7 @@ Whether you're a VFX artist creating camera tracks, a 3D archivist preserving ar
 
 [![Blender Version](https://img.shields.io/badge/Blender-4.0%2B-orange.svg)](https://www.blender.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
+[![Release](https://img.shields.io/github/v/release/notacarrrot/oneShot)]()
 
 
 <h2 id="Table">📋 Table of Contents</h2>
