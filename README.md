@@ -13,17 +13,18 @@
 
 **oneShot** is a powerful Blender addon that automates the entire process of creating 3D scenes from video footage or image sequences. It provides a complete, self-contained photogrammetry pipeline by integrating the power of **FFmpeg** and **COLMAP** into a user-friendly, single-click interface.
 
+![oneShot Demo](https://github.com/notacarrrot/oneShot/tree/main/video-OUT/addon-demo.gif)
+
 Whether you're a VFX artist creating camera tracks, a 3D archivist preserving artifacts, or an indie developer building game assets, oneShot handles the complex technical pipeline, letting you focus on the creative result.
 
-[](https://www.blender.org/)
-[](https://www.google.com/search?q=LICENSE)
-[](https://www.google.com/search?q=)
+[![Blender Version](https://img.shields.io/badge/Blender-4.0%2B-orange.svg)](https://www.blender.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 
 
 <h2 id="Table">📋 Table of Contents</h2>
 
   - [✨ Features](#Features)
-  - [🎬 Demo](#Demo)
   - [🚀 Installation](#Installation)
   - [🛠️ Usage & Workflow](#Usage)
       - [One-Time Setup: Installing Dependencies](#Dependencies)
@@ -45,20 +46,6 @@ Whether you're a VFX artist creating camera tracks, a 3D archivist preserving ar
   * **Direct COLMAP Import:** Already have a COLMAP model? A separate panel allows you to import it directly, bypassing the generation step.
 
 
-<h2 id="Demo">🎬 Demo</h2>
-
-Here's a quick look at the streamlined oneShot workflow.
-
-**(GIF Placeholder: Show the addon preferences, clicking the 'Download & Install' buttons for COLMAP and FFmpeg.)**
-*Fig 1: Automated one-time installation of dependencies from the addon preferences.*
-
-**(GIF Placeholder: Show the 'oneShot Workflow' panel, selecting a video, an output folder, and clicking the single 'Generate Scene' button as the progress bar updates.)**
-*Fig 2: The unified workflow automatically extracts frames, runs COLMAP, and imports the result with one click.*
-
-**(GIF Placeholder: After generation, show the 'Optimise Scene' button being clicked. The scene's camera becomes upright, and the outliner is cleaned up.)**
-*Fig 3: The one-click Optimise button prepares the scene for animation and improves viewport performance.*
-
-
 <h2 id="Installation">🚀 Installation</h2>
 
 1.  Go to the [Releases](https://github.com/notacarrrot/oneShot/releases) page.
@@ -75,6 +62,8 @@ The entire process is managed from the **oneShot panel** in the 3D View's sideba
 <h3 id="Dependencies">One-Time Setup: Installing Dependencies</h3>
 
 Before you begin, you must install the addon's dependencies. This is a one-time action.
+
+![oneShot install Demo](https://github.com/notacarrrot/oneShot/tree/main/video-OUT/installation-demo.gif)
 
 1.  Go to `Edit > Preferences > Add-ons` and find the "oneShot" addon.
 2.  Expand the addon's preferences panel.
